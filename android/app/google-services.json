@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "209793279994",
+    "project_id": "controle-estoque-c7892",
+    "storage_bucket": "controle-estoque-c7892.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:209793279994:android:8465ff74dc943779776643",
+        "android_client_info": {
+          "package_name": "com.example.flutter_shiftsync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDO0U0kki_37a0MFbsQca5ngIOVgZV9jz4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
