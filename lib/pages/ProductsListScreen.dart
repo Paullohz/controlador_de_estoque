@@ -2,9 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
-class ProductsListScreen extends StatelessWidget {
+
+class ProductsListScreen extends StatefulWidget {
+  @override
+  _ProductsListScreenState createState() => _ProductsListScreenState();
+}
+
+class _ProductsListScreenState extends State<ProductsListScreen> {
   final ProdutosRepository produtosRepository = ProdutosRepository();
+  late List<Produto> _allProducts;
+  late List<Produto> _displayedProducts;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      List<Produto> produtos = await produtosRepository.getProdutos();
+      setState(() {
+        _allProducts = produtos;
+        _displayedProducts = produtos;
+      });
+    } catch (error) {
+      print('Erro ao carregar produtos: $error');
+    }
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      _displayedProducts = _allProducts
+          .where((produto) =>
+              produto.nome.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +92,7 @@ class ProductsListScreen extends StatelessWidget {
                       hintText: 'Pesquisar',
                       border: InputBorder.none,
                     ),
+                    onChanged: _filterProducts,
                   ),
                 ),
               ],
@@ -80,45 +117,36 @@ class ProductsListScreen extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: 56,
-          child: FutureBuilder<List<Produto>>(
-            future: produtosRepository.getProdutos(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Erro ao carregar produtos: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('Nenhum produto encontrado.'));
-              } else {
-                var produtos = snapshot.data!;
-                return ListView.separated(
-                  padding: EdgeInsets.all(16),
-                  itemCount: produtos.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    var produto = produtos[index];
-                    return ListTile(
-                      leading: SizedBox(
-                        height: 50, // Defina a altura desejada para a imagem
-                        width: 50, // Defina a largura desejada para a imagem
-                        child: Image.network(
-                          produto.icone,
-                          fit: BoxFit.cover, // Ajusta a imagem para cobrir o espaço definido
-                        ),
-                      ),
-                      title: Center(
-                        child: Text(
-                          produto.nome,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      trailing: Text('R\$ ${produto.preco.toStringAsFixed(2)}'),
-                    );
-                  },
-                  separatorBuilder: (__, ___) => Divider(),
-                );
-              }
-            },
-          ),
+          child: _displayedProducts != null
+              ? (_displayedProducts.isEmpty
+                  ? Center(child: Text('Nenhum produto encontrado.'))
+                  : ListView.separated(
+                      padding: EdgeInsets.all(16),
+                      itemCount: _displayedProducts.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var produto = _displayedProducts[index];
+                        return ListTile(
+                          leading: SizedBox(
+                            height: 50, // Defina a altura desejada para a imagem
+                            width: 50, // Defina a largura desejada para a imagem
+                            child: Image.network(
+                              produto.icone,
+                              fit: BoxFit.cover, // Ajusta a imagem para cobrir o espaço definido
+                            ),
+                          ),
+                          title: Center(
+                            child: Text(
+                              produto.nome,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          trailing:
+                              Text('R\$ ${produto.preco.toStringAsFixed(2)}'),
+                        );
+                      },
+                      separatorBuilder: (__, ___) => Divider(),
+                    ))
+              : Center(child: CircularProgressIndicator()),
         ),
       ],
     );

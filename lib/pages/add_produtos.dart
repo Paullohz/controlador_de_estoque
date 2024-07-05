@@ -120,7 +120,7 @@ class _AddProdutosState extends State<AddProdutos> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0), // Adiciona padding lateral
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0), // Adiciona padding lateral
             children: <Widget>[
               TextFormField(
                 cursorColor: Color(0xFFD72323),
