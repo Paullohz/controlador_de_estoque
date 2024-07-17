@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_shiftsync/widgets/slidable_custom.dart'; // Importar SlidableCustom
 import 'package:flutter_svg/flutter_svg.dart';
+<<<<<<< HEAD
+=======
+import 'package:flutter_slidable/flutter_slidable.dart'; // Importando SlidablePage
+>>>>>>> 6312cb88f825cd4383410e4211d318ece4539041
 
 class ProductsListScreen extends StatefulWidget {
   @override
@@ -41,6 +46,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     });
   }
 
+<<<<<<< HEAD
   void _removeProduct(String productId) async {
     try {
       await produtosRepository.deleteProduto(productId);
@@ -51,6 +57,12 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     } catch (error) {
       print('Erro ao excluir produto: $error');
     }
+=======
+  void _removeProduct(int index) {
+    setState(() {
+      _displayedProducts.removeAt(index);
+    });
+>>>>>>> 6312cb88f825cd4383410e4211d318ece4539041
   }
 
   void _navigateToSlidablePage(BuildContext context) {
@@ -68,6 +80,12 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
         (screenHeight <= 740 && screenWidth <= 360) ? 40.0 : 65.0;
 
     return Scaffold(
+<<<<<<< HEAD
+=======
+      appBar: AppBar(
+        title: Text('Products List'),
+      ),
+>>>>>>> 6312cb88f825cd4383410e4211d318ece4539041
       body: Stack(
         children: <Widget>[
           Container(
@@ -136,6 +154,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             left: 0,
             right: 0,
             bottom: 56,
+<<<<<<< HEAD
             child: _displayedProducts.isNotEmpty
                 ? ListView.builder(
                     padding: EdgeInsets.all(16),
@@ -210,6 +229,65 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
                 ],
               ),
             ),
+=======
+            child: _displayedProducts != null
+                ? (_displayedProducts.isEmpty
+                    ? Center(child: Text('Nenhum produto encontrado.'))
+                    : ListView.builder(
+                        padding: EdgeInsets.all(16),
+                        itemCount: _displayedProducts.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          var produto = _displayedProducts[index];
+                          return Slidable(
+                            key: ValueKey(index),
+                            startActionPane: ActionPane(
+                              motion: ScrollMotion(),
+                              dismissible: DismissiblePane(
+                                onDismissed: () {
+                                  // Implementação da lógica ao ser dismissível
+                                  _removeProduct(index);
+                                },
+                              ),
+                              children: [
+                                SlidableAction(
+                                  onPressed: () {
+                                    // Implementação da lógica ao pressionar a ação
+                                    _removeProduct(index);
+                                  },
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.delete,
+                                  label: 'Delete',
+                                ),
+                              ],
+                            ),
+                            actionExtentRatio: 0.25,
+                            child: ListTile(
+                              onTap: () {
+                                _navigateToSlidablePage(context); // Navega para SlidablePage
+                              },
+                              leading: SizedBox(
+                                height: 50,
+                                width: 50,
+                                child: Image.network(
+                                  produto.icone,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              title: Center(
+                                child: Text(
+                                  produto.nome,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              trailing: Text(
+                                  'R\$ ${produto.preco.toStringAsFixed(2)}'),
+                            ),
+                          );
+                        },
+                      ))
+                : Center(child: CircularProgressIndicator()),
+>>>>>>> 6312cb88f825cd4383410e4211d318ece4539041
           ),
         ],
       ),
