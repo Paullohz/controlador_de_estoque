@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
@@ -19,6 +20,7 @@ class _AddProdutosState extends State<AddProdutos> {
   bool _inStock = false;
   int _productQuantity = 0;
   String _productImage = ''; // Caminho da imagem do produto
+  File? _selectedImage;
 
   InputDecoration _buildInputDecoration(String labelText) {
     return InputDecoration(
@@ -69,6 +71,10 @@ class _AddProdutosState extends State<AddProdutos> {
         );
         // Limpar o formulário após adicionar o produto
         _formKey.currentState?.reset();
+        setState(() {
+          _selectedImage = null;
+          _productImage = '';
+        });
       }).catchError((error) {
         // Tratar erros ao adicionar o produto
         showDialog(
@@ -90,12 +96,12 @@ class _AddProdutosState extends State<AddProdutos> {
     }
   }
 
-  void _selectImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _productImage = pickedFile.path;
+        _selectedImage = File(pickedFile.path);
+        _productImage = pickedFile.path; // Caminho da imagem selecionada
       });
     }
   }
@@ -172,32 +178,35 @@ class _AddProdutosState extends State<AddProdutos> {
                 },
               ),
               SizedBox(height: 16.0),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Padding(padding: EdgeInsets.only(left: 10)),
-                  Expanded(
-                    child: TextFormField(
-                      cursorColor: Color(0xFFD72323),
-                      maxLines: 5,
-                      decoration: _buildInputDecoration('Imagem do Produto'),
-                      readOnly: true,
-                      onTap: _selectImage, // Chama o método ao tocar no campo
-                      onSaved: (value) {
-                         // Salvar o caminho da imagem selecionada (se necessário)
-                        _productImage = value!;
-                      },
+              if (_selectedImage != null)
+                Container(
+                  width: 100,
+                  height: 100,
+                  margin: EdgeInsets.only(bottom: 16.0), // Espaço entre a imagem e o botão
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: FileImage(_selectedImage!),
+                      fit: BoxFit.cover,
                     ),
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                  SizedBox(width: 10.0),
-                  IconButton(
-                    icon: Icon(Icons.add_a_photo),
-                    iconSize: 40,
-                    color: Color(0xff303841),
-                    padding: EdgeInsets.only(bottom: 60, right: 60, left: 50),
-                    onPressed: _selectImage, // Chama o método ao tocar no ícone
+                ),
+              TextButton(
+                onPressed: _pickImageFromGallery,
+                child: Text(
+                  _selectedImage == null
+                      ? 'Selecionar Imagem do Produto'
+                      : 'Imagem Selecionada',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[300]!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                ],
+                ),
               ),
               SizedBox(height: 16.0),
               CheckboxListTile(

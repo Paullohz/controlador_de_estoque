@@ -1,9 +1,9 @@
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/pages/add_produtos.dart';
 import 'package:flutter_shiftsync/pages/profilescreen.dart';
-import 'package:flutter_shiftsync/pages/ProductsListScreen.dart'; // Atualize o caminho se necessário
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
+import 'package:flutter_shiftsync/widgets/slidable_custom.dart'; // Verifique o nome do arquivo importado
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({Key? key}) : super(key: key);
@@ -19,6 +19,7 @@ class _MenuPageState extends State<MenuPage> {
   final List<Widget> _screens = [
     ProductsListScreen(),
     AddProdutos(),
+   // SlidablePage(), // Certifique-se de que o widget SlidablePage está sendo usado corretamente
     ProfileScreen(),
   ];
 
@@ -44,7 +45,8 @@ class _MenuPageState extends State<MenuPage> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
-    double toolbarHeight = (screenHeight <= 740 && screenWidth <= 360) ? 60.0 : 65.0;
+    double toolbarHeight =
+        (screenHeight <= 740 && screenWidth <= 360) ? 60.0 : 65.0;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -52,7 +54,7 @@ class _MenuPageState extends State<MenuPage> {
         elevation: 0.0,
         backgroundColor: const Color(0xff303841),
         automaticallyImplyLeading: true,
-        toolbarHeight: toolbarHeight, 
+        toolbarHeight: toolbarHeight,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20.0, top: 15),

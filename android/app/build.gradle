@@ -1,3 +1,4 @@
+// build.gradle no nível do aplicativo
 plugins {
     id "com.android.application"
     // START: FlutterFire Configuration
@@ -68,6 +69,5 @@ flutter {
 }
 
 dependencies {
-      classpath 'com.google.gms:google-services:4.3.10'
+    // Suas outras dependências
 }
-

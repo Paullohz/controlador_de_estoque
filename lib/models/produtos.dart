@@ -4,6 +4,7 @@ class Produto {
   String nome;
   String sigla;
   double preco;
+  final String? descricao;
 
   Produto({
     this.id = '',
@@ -11,9 +12,9 @@ class Produto {
     required this.nome,
     required this.sigla,
     required this.preco,
+    this.descricao,
   });
 
-  // Converte um documento do Firestore em um objeto Produto
   factory Produto.fromFirestore(Map<String, dynamic> data, String documentId) {
     return Produto(
       id: documentId,
@@ -21,16 +22,17 @@ class Produto {
       nome: data['nome'],
       sigla: data['sigla'],
       preco: data['preco'].toDouble(),
+      descricao: data['descricao'],
     );
   }
 
-  // Converte um objeto Produto em um mapa para o Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'icone': icone,
       'nome': nome,
       'sigla': sigla,
       'preco': preco,
+      'descricao': descricao,
     };
   }
 }
