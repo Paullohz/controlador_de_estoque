@@ -106,7 +106,6 @@ class _EditProfileState extends State<EditProfile> {
               SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // Implementar ação para salvar as alterações
                 },
                 child: Text(
                   'Salvar Alterações',
