@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/pages/add_produtos.dart';
 import 'package:flutter_shiftsync/pages/profilescreen.dart';
 import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
-import 'package:flutter_shiftsync/widgets/slidable_custom.dart'; // Verifique o nome do arquivo importado
+import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 class MenuPage extends StatefulWidget {
@@ -19,7 +19,6 @@ class _MenuPageState extends State<MenuPage> {
   final List<Widget> _screens = [
     ProductsListScreen(),
     AddProdutos(),
-   // SlidablePage(), // Certifique-se de que o widget SlidablePage está sendo usado corretamente
     ProfileScreen(),
   ];
 

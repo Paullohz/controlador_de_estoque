@@ -1,11 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/firebase_options.dart';
+import 'package:flutter_shiftsync/pages/EditProfile.dart';
 import 'package:flutter_shiftsync/pages/add_produtos.dart';
 import 'package:flutter_shiftsync/pages/login_page.dart';
 import 'package:flutter_shiftsync/pages/profilescreen.dart';
 import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
-import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
 import 'package:flutter_shiftsync/pages/menu_page.dart'; // Certifique-se de que o nome do arquivo esteja correto
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
         '/add_produtos': (context) => AddProdutos(),
         '/profile': (context) => ProfileScreen(),
         '/products_list': (context) => ProductsListScreen(),
+        '/edit_profile' : (context) => EditProfile(),
       },
     );
   }

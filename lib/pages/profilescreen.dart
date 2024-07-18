@@ -89,7 +89,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ItemProfile('Telefone', '(62) 98446-4742', CupertinoIcons.phone),
                   const SizedBox(height: 40),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/edit_profile');
+                    },
                     child: const Text(
                       'Editar Perfil',
                       style: TextStyle(

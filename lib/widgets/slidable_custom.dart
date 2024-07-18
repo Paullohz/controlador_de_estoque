@@ -58,7 +58,7 @@ class _SlidableCustomState extends State<SlidableCustom> {
             label: 'Editar',
           ),
           SlidableAction(
-            onPressed: () => _showDeleteConfirmationDialog(context),
+            onPressed: (context) => _showDeleteConfirmationDialog(context),
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
             icon: Icons.delete,
