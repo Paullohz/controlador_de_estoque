@@ -133,7 +133,19 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             ),
           ),
           Positioned(
-            top: toolbarHeight + 148,
+            top: toolbarHeight + 155,
+            left: 36,
+            child: Text(
+              'Produtos cadastrados:',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: Color(0XFFD72323),
+              ),
+            ),
+          ),
+          Positioned(
+            top: toolbarHeight + 180,
             left: 0,
             right: 0,
             bottom: 56,
@@ -209,6 +221,16 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
       ),
     );
   }
-  
-  SlidablePage() {}
+
+  // Defina a classe SlidablePage se ainda não estiver definida
+  Widget SlidablePage() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Slidable Page'),
+      ),
+      body: Center(
+        child: Text('Slidable Page Content'),
+      ),
+    );
+  }
 }

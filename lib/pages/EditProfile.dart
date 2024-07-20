@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_shiftsync/pages/menu_page.dart';
 
 class EditProfile extends StatefulWidget {
@@ -19,6 +18,9 @@ class _EditProfileState extends State<EditProfile> {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _phoneController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _newPasswordController = TextEditingController();
+  TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -50,10 +52,10 @@ class _EditProfileState extends State<EditProfile> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFFD72323)),
           onPressed: () {
-            Navigator.push(
+            Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => MenuPage()
-              ),
+              MaterialPageRoute(builder: (context) => const MenuPage()),
+              (route) => false, 
             );
           },
         ),
@@ -66,32 +68,60 @@ class _EditProfileState extends State<EditProfile> {
             end: Alignment.bottomCenter,
             colors: [
               const Color(0xff303841), 
-              const Color(0XFFEEEEEE), 
+              const Color(0xffffffff), 
             ],
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 20),
+              SizedBox(height: 30),
+              Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  child: Text(
+                    'Alterar Foto',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFFFFFFF), 
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
               GestureDetector(
                 onTap: () {
-
                 },
                 child: CircleAvatar(
                   radius: 70,
                   backgroundImage: AssetImage(_imageUrl),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 40), 
-                child: SizedBox.shrink(),
+              SizedBox(height: 20),
+              Align(
+                alignment: Alignment(-0.8, 0),
+                child: Text(
+                  'Alterar Dados',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFFFFFFF), // Cor do texto
+                  ),
+                ),
               ),
+              SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildTextField(_nameController, 'Nome', Icons.person),
+              ),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildTextField(_phoneController, 'Telefone', Icons.phone),
               ),
               SizedBox(height: 20),
               Padding(
@@ -101,12 +131,21 @@ class _EditProfileState extends State<EditProfile> {
               SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildTextField(_phoneController, 'Telefone', Icons.phone),
+                child: _buildPasswordField(_passwordController, 'Senha Atual', Icons.lock),
+              ),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildPasswordField(_newPasswordController, 'Nova Senha', Icons.lock_outline),
+              ),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildPasswordField(_confirmPasswordController, 'Confirmar Nova Senha', Icons.lock_outline),
               ),
               SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // Implementar ação para salvar as alterações
                 },
                 child: Text(
                   'Salvar Alterações',
@@ -149,6 +188,38 @@ class _EditProfileState extends State<EditProfile> {
       child: ListTile(
         title: TextFormField(
           controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(color: const Color(0xFFD72323)),
+            border: InputBorder.none,
+            prefixIcon: Icon(icon, color: const Color(0xFFD72323)),
+          ),
+        ),
+        tileColor: const Color(0xFF3A4750),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(
+      TextEditingController controller, String label, IconData icon) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xff303841),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(.1),
+            spreadRadius: 2,
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: ListTile(
+        title: TextFormField(
+          controller: controller,
+          obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             labelText: label,
