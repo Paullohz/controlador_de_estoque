@@ -6,12 +6,20 @@ import 'package:flutter_shiftsync/pages/add_produtos.dart';
 import 'package:flutter_shiftsync/pages/login_page.dart';
 import 'package:flutter_shiftsync/pages/profilescreen.dart';
 import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
-import 'package:flutter_shiftsync/pages/menu_page.dart'; // Certifique-se de que o nome do arquivo esteja correto
+import 'package:flutter_shiftsync/pages/menu_page.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:flutter_shiftsync/pages/register.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -38,6 +46,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfileScreen(),
         '/products_list': (context) => ProductsListScreen(),
         '/edit_profile' : (context) => EditProfile(),
+        '/register' : (context) => RegisterScreen()
       },
     );
   }

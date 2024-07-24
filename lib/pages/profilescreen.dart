@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -12,6 +14,11 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   double toolbarHeight = 65.0; // Altura padrão da AppBar
 
+  String _name = '';
+  String _email = '';
+  String _phone = '';
+  String _imageUrl = '';
+
   @override
   void initState() {
     super.initState();
@@ -20,6 +27,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (userId.isEmpty) {
+      print('No user logged in.');
+      return;
+    }
+
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      setState(() {
+        _name = userDoc['name'];
+        _email = userDoc['email'];
+        _phone = userDoc['phone'];
+        _imageUrl = userDoc['imageUrl'];
+      });
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
   }
 
   @override
@@ -74,19 +106,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: EdgeInsets.all(1),
                     decoration: BoxDecoration(
                       color: Color(0xFFD72323),
-                      shape: BoxShape.circle
-                    ),                 
-                    child:  CircleAvatar(
-                    radius: 70,
-                    backgroundImage: AssetImage('assets/Profile.jpg'),
+                      shape: BoxShape.circle,
+                    ),
+                    child: CircleAvatar(
+                      radius: 70,
+                      backgroundImage: _imageUrl.isNotEmpty
+                          ? NetworkImage(_imageUrl)
+                          : AssetImage('assets/Profile.jpg') as ImageProvider,
+                    ),
                   ),
-                  ),
                   const SizedBox(height: 20),
-                  ItemProfile('Nome', 'Paullo Henrique', CupertinoIcons.person),
+                  ItemProfile('Nome', _name, CupertinoIcons.person),
                   const SizedBox(height: 20),
-                  ItemProfile('Email', 'paullohenriquecastrosilva@gmail.com', CupertinoIcons.mail_solid),
+                  ItemProfile('Email', _email, CupertinoIcons.mail_solid),
                   const SizedBox(height: 20),
-                  ItemProfile('Telefone', '(62) 98446-4742', CupertinoIcons.phone),
+                  ItemProfile('Telefone', _phone, CupertinoIcons.phone),
                   const SizedBox(height: 40),
                   ElevatedButton(
                     onPressed: () {
@@ -111,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-        ],  
+        ],
       ),
     );
   }
