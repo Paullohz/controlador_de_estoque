@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_logo.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -46,97 +48,69 @@ class LoginPage extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF303841),
-      ),
+      backgroundColor: AppColors.ink,
       body: Container(
         width: screenWidth,
         height: screenHeight,
         padding: const EdgeInsets.symmetric(horizontal: 27, vertical: 50),
-        color: const Color(0xFF303841),
+        color: AppColors.ink,
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.2,
-                  vertical: 40,
-                ),
-                child: const Text(
-                  "LOGO",
-                  style: TextStyle(
-                    color: Color(0xFFD72323),
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: AppLogo(height: 56),
               ),
-              const Text(
+              Text(
                 "Bem-vindo ao App!",
-                style: TextStyle(
-                  color: Color(0xFFEEEEEE),
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.display.copyWith(fontSize: 24),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "Digite os dados de acesso nos campos abaixo",
-                style: TextStyle(
-                  color: Color(0xFFEEEEEE),
-                ),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 30),
               CupertinoTextField(
                 controller: emailController,
-                cursorColor: const Color(0xFFD72323),
+                cursorColor: AppColors.accent,
                 padding: const EdgeInsets.all(15),
                 placeholder: "Email",
-                placeholderStyle: const TextStyle(
-                  color: Color(0xFFD72323),
-                  fontSize: 14,
-                ),
-                style: const TextStyle(
-                  color: Color(0xFFD72323),
-                  fontSize: 14,
-                ),
+                placeholderStyle: AppTextStyles.bodyMuted,
+                style: AppTextStyles.body,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(7),
+                  color: AppColors.surfaceHigh,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
               CupertinoTextField(
                 controller: passwordController,
+                cursorColor: AppColors.accent,
                 padding: const EdgeInsets.all(15),
                 placeholder: "Senha",
                 obscureText: true,
-                placeholderStyle: const TextStyle(
-                  color: Color(0xFFD72323),
-                  fontSize: 14,
-                ),
-                style: const TextStyle(
-                  color: Color(0xFFD72323),
-                  fontSize: 14,
-                ),
+                placeholderStyle: AppTextStyles.bodyMuted,
+                style: AppTextStyles.body,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(7),
+                  color: AppColors.surfaceHigh,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 28),
               SizedBox(
                 width: double.infinity,
                 child: CupertinoButton(
                   padding: const EdgeInsets.all(17),
-                  color: const Color(0xFF3A4750),
-                  child: const Text(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Text(
                     "Acessar",
-                    style: TextStyle(
-                      color: Color(0xFFD72323),
-                      fontSize: 14,
+                    style: AppTextStyles.body.copyWith(
+                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -151,20 +125,17 @@ class LoginPage extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 7),
-              Container(
+              const SizedBox(height: 12),
+              SizedBox(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF303841),
-                  borderRadius: BorderRadius.circular(17),
-                ),
                 child: CupertinoButton(
-                  color: const Color(0xFFD72323),
-                  child: const Text(
+                  padding: const EdgeInsets.all(17),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Text(
                     "Registrar-se",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.accentSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

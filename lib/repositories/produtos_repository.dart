@@ -34,4 +34,8 @@ class ProdutosRepository {
   Future<void> deleteProduto(String id) async {
     await collection.doc(id).delete();
   }
+
+  Future<void> updateProdutoIcone(String id, String icone) async {
+    await collection.doc(id).update({'icone': icone});
+  }
 }

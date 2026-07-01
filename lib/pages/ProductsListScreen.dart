@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
-import 'package:flutter_shiftsync/repositories/produtos_repository.dart'; 
+import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_logo.dart';
 import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ProductsListScreen extends StatefulWidget {
   @override
@@ -54,182 +54,116 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     }
   }
 
-  void _navigateToSlidablePage(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => SlidablePage()), // Certifique-se de que SlidablePage está importado e correto
-    );
+  void _updateProductImage(String productId, String newImageUrl) async {
+    try {
+      await produtosRepository.updateProdutoIcone(productId, newImageUrl);
+      setState(() {
+        for (var produto in _allProducts) {
+          if (produto.id == productId) produto.icone = newImageUrl;
+        }
+        for (var produto in _displayedProducts) {
+          if (produto.id == productId) produto.icone = newImageUrl;
+        }
+      });
+    } catch (error) {
+      print('Erro ao atualizar imagem do produto: $error');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidth = MediaQuery.of(context).size.width;
-
-    double toolbarHeight =
-        (screenHeight <= 740 && screenWidth <= 360) ? 40.0 : 65.0;
-
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          Container(
-            height: screenHeight,
-            width: screenWidth,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff303841), Color(0xffEEEEEE)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.2, 0.2],
-              ),
-            ),
-          ),
-          Positioned(
-            top: toolbarHeight + 15,
-            left: 20,
-            right: 20,
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Color(0XFFEEEEEE),
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0XFFD72323),
-                    spreadRadius: 2,
-                    blurRadius: 3,
-                    offset: Offset(0, 0),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
+      backgroundColor: AppColors.ink,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.search, color: Colors.grey),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Pesquisar',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: _filterProducts,
+                  const AppLogo(height: 36),
+                  const SizedBox(height: 20),
+                  Text('Produtos cadastrados', style: AppTextStyles.heading),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_allProducts.length} ${_allProducts.length == 1 ? 'item' : 'itens'} no estoque',
+                    style: AppTextStyles.bodyMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: AppColors.textMuted),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            style: AppTextStyles.body,
+                            decoration: InputDecoration(
+                              hintText: 'Pesquisar produto',
+                              hintStyle: AppTextStyles.bodyMuted,
+                              border: InputBorder.none,
+                              isCollapsed: true,
+                            ),
+                            onChanged: _filterProducts,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          Positioned(
-            top: toolbarHeight + 55,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: screenHeight * 0.2,
-              width: screenWidth,
-              child: SvgPicture.asset(
-                'assets/logo.svg',
-                fit: BoxFit.fitWidth,
-              ),
-            ),
-          ),
-          Positioned(
-            top: toolbarHeight + 155,
-            left: 36,
-            child: Text(
-              'Produtos cadastrados:',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-                color: Color(0XFFD72323),
-              ),
-            ),
-          ),
-          Positioned(
-            top: toolbarHeight + 180,
-            left: 0,
-            right: 0,
-            bottom: 56,
-            child: _displayedProducts.isNotEmpty
-                ? ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: _displayedProducts.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      var produto = _displayedProducts[index];
-                      return SlidableCustom(
-                        title: produto.nome,
-                        subtitle: 'R\$ ${produto.preco.toStringAsFixed(2)}',
-                        imageurl: produto.icone,
-                        action1: () async {
-                          // Ação de editar
-                        },
-                        action2: () {
-                          _removeProduct(produto.id);
-                        },
-                        onDelete: () {
-                          _removeProduct(produto.id); // Chamada para deletar no banco de dados
-                        },
-                      );
-                    },
-                  )
-                : Center(
-                    child: Text(
-                      'Nenhum produto encontrado',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
+            Expanded(
+              child: _displayedProducts.isNotEmpty
+                  ? ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      itemCount: _displayedProducts.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var produto = _displayedProducts[index];
+                        return SlidableCustom(
+                          title: produto.nome,
+                          subtitle: 'R\$ ${produto.preco.toStringAsFixed(2)}',
+                          imageurl: produto.icone,
+                          action1: () async {
+                            // Ação de editar
+                          },
+                          action2: () {
+                            _removeProduct(produto.id);
+                          },
+                          onDelete: () {
+                            _removeProduct(produto.id);
+                          },
+                          onImageUpdated: (newImageUrl) {
+                            _updateProductImage(produto.id, newImageUrl);
+                          },
+                        );
+                      },
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.inventory_2_outlined,
+                              size: 48, color: AppColors.textMuted),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Nenhum produto encontrado',
+                            style: AppTextStyles.bodyMuted,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      _navigateToSlidablePage(context);
-                    },
-                    icon: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.search,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.logout,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Defina a classe SlidablePage se ainda não estiver definida
-  Widget SlidablePage() {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Slidable Page'),
-      ),
-      body: Center(
-        child: Text('Slidable Page Content'),
+          ],
+        ),
       ),
     );
   }

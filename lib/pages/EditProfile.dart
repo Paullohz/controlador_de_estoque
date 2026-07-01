@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_shiftsync/pages/menu_page.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({Key? key}) : super(key: key);
@@ -62,22 +63,16 @@ class _EditProfileState extends State<EditProfile> {
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidth = MediaQuery.of(context).size.width;
-    double toolbarHeight =
-        (screenHeight <= 740 && screenWidth <= 360) ? 60.0 : 65.0;
-
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xff303841),
-        title: const Text(
+        backgroundColor: AppColors.ink,
+        title: Text(
           'Editar Perfil',
-          style: TextStyle(color: Color(0xFFD72323)),
+          style: AppTextStyles.heading,
         ),
-        toolbarHeight: toolbarHeight,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFD72323)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.accent),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -87,61 +82,50 @@ class _EditProfileState extends State<EditProfile> {
           },
         ),
       ),
-      backgroundColor: Colors.white,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xff303841),
-              const Color(0xffffffff),
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 30),
-              const Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 13),
-                  child: Text(
-                    'Alterar Foto',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFFFFFFF),
-                    ),
-                  ),
+      backgroundColor: AppColors.ink,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                child: Text(
+                  'Alterar Foto',
+                  style: AppTextStyles.subheading,
                 ),
               ),
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  // Adicione funcionalidade para alterar a foto aqui
-                },
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                // Adicione funcionalidade para alterar a foto aqui
+              },
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                ),
                 child: CircleAvatar(
                   radius: 70,
+                  backgroundColor: AppColors.surfaceHigh,
                   backgroundImage: AssetImage(_imageUrl),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Align(
-                alignment: Alignment(-0.8, 0),
-                child: Text(
-                  'Alterar Dados',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFFFFF),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 20),
+            Align(
+              alignment: const Alignment(-0.8, 0),
+              child: Text(
+                'Alterar Dados',
+                style: AppTextStyles.subheading,
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildTextField(_nameController, 'Nome', Icons.person),
@@ -174,56 +158,50 @@ class _EditProfileState extends State<EditProfile> {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _saveUserData,
-                child: const Text(
+                child: Text(
                   'Salvar Alterações',
-                  style: TextStyle(
+                  style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(200, 50),
+                  minimumSize: const Size(double.infinity, 50),
                   padding: const EdgeInsets.all(15),
-                  backgroundColor: const Color(0xFFD72323),
+                  backgroundColor: AppColors.accent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildTextField(
       TextEditingController controller, String label, IconData icon) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xff303841),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(0, 5),
-            color: Colors.black.withOpacity(.1),
-            spreadRadius: 2,
-            blurRadius: 6,
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: ListTile(
         title: TextFormField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: AppTextStyles.body,
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: const TextStyle(color: Color(0xFFD72323)),
+            labelStyle: AppTextStyles.label,
             border: InputBorder.none,
-            prefixIcon: Icon(icon, color: const Color(0xFFD72323)),
+            prefixIcon: Icon(icon, color: AppColors.accent),
           ),
         ),
-        tileColor: const Color(0xFF3A4750),
+        tileColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
       ),
     );
   }
@@ -232,30 +210,25 @@ class _EditProfileState extends State<EditProfile> {
       TextEditingController controller, String label, IconData icon) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xff303841),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(0, 5),
-            color: Colors.black.withOpacity(.1),
-            spreadRadius: 2,
-            blurRadius: 6,
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: ListTile(
         title: TextFormField(
           controller: controller,
           obscureText: true,
-          style: const TextStyle(color: Colors.white),
+          style: AppTextStyles.body,
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: const TextStyle(color: Color(0xFFD72323)),
+            labelStyle: AppTextStyles.label,
             border: InputBorder.none,
-            prefixIcon: Icon(icon, color: const Color(0xFFD72323)),
+            prefixIcon: Icon(icon, color: AppColors.accent),
           ),
         ),
-        tileColor: const Color(0xFF3A4750),
+        tileColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
       ),
     );
   }

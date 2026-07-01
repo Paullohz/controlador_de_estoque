@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
 
 class AddProdutos extends StatefulWidget {
   const AddProdutos({Key? key}) : super(key: key);
@@ -19,80 +21,121 @@ class _AddProdutosState extends State<AddProdutos> {
   String _productCategory = 'Categoria 1';
   bool _inStock = false;
   int _productQuantity = 0;
-  String _productImage = ''; // Caminho da imagem do produto
+  String _productImage = ''; // URL da imagem do produto no Firebase Storage
   File? _selectedImage;
+  bool _isSaving = false;
 
   InputDecoration _buildInputDecoration(String labelText) {
     return InputDecoration(
       labelText: labelText,
-      labelStyle: TextStyle(color: Colors.grey[700]),
+      labelStyle: TextStyle(color: AppColors.textMuted),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.surfaceHigh,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.0),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.0),
-        borderSide: BorderSide(color: Color(0xff303841)),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: BorderSide(color: AppColors.accent, width: 1.5),
       ),
     );
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
+  Future<String?> _uploadImage(File image) async {
+    try {
+      final fileName =
+          'produtos/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child(fileName);
+      final uploadTask = await ref.putFile(image);
+      return await uploadTask.ref.getDownloadURL();
+    } catch (e) {
+      print('Erro ao enviar imagem: $e');
+      return null;
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    _formKey.currentState?.save();
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      String imageUrl = _productImage;
+      if (_selectedImage != null) {
+        final uploadedUrl = await _uploadImage(_selectedImage!);
+        if (uploadedUrl == null) {
+          setState(() {
+            _isSaving = false;
+          });
+          _showErrorDialog('Não foi possível enviar a imagem do produto. Tente novamente.');
+          return;
+        }
+        imageUrl = uploadedUrl;
+      }
+
       Produto newProduto = Produto(
-        icone: _productImage,
+        icone: imageUrl,
         nome: _productName,
         sigla: _productCategory,
         preco: _productPrice,
       );
-      _repository.addProduto(newProduto).then((docRef) {
-        // Exibir o produto cadastrado
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Produto Adicionado'),
-            content: Text('Nome: $_productName\nPreço: R\$ $_productPrice'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-        // Limpar o formulário após adicionar o produto
-        _formKey.currentState?.reset();
-        setState(() {
-          _selectedImage = null;
-          _productImage = '';
-        });
-      }).catchError((error) {
-        // Tratar erros ao adicionar o produto
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Erro ao Adicionar Produto'),
-            content: Text('Ocorreu um erro ao adicionar o produto: $error'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
+
+      await _repository.addProduto(newProduto);
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Produto Adicionado'),
+          content: Text('Nome: $_productName\nPreço: R\$ $_productPrice'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      );
+
+      // Limpar o formulário após adicionar o produto
+      _formKey.currentState?.reset();
+      setState(() {
+        _selectedImage = null;
+        _productImage = '';
+        _isSaving = false;
       });
+    } catch (error) {
+      setState(() {
+        _isSaving = false;
+      });
+      _showErrorDialog('Ocorreu um erro ao adicionar o produto: $error');
     }
   }
 
@@ -101,35 +144,29 @@ class _AddProdutosState extends State<AddProdutos> {
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
-        _productImage = pickedFile.path; // Caminho da imagem selecionada
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidth = MediaQuery.of(context).size.width;
-    double toolbarHeight = (screenHeight <= 740 && screenWidth <= 360) ? 20.0 : 20.0;
-    double paddingTop = (screenHeight <= 740 && screenWidth <= 360) ? 20.0 : 4.0;
-
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Color(0xff303841),
-        automaticallyImplyLeading: false,
-        toolbarHeight: toolbarHeight, // Ajusta a altura da AppBar
-      ),
-      backgroundColor: const Color(0XFFEEEEEE),
-      body: Padding(
-        padding: EdgeInsets.only(top: paddingTop),
+      backgroundColor: AppColors.ink,
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0), // Adiciona padding lateral
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             children: <Widget>[
+              Text('Adicionar Produto', style: AppTextStyles.heading),
+              const SizedBox(height: 4),
+              Text(
+                'Preencha os dados do novo produto',
+                style: AppTextStyles.bodyMuted,
+              ),
+              const SizedBox(height: 20),
               TextFormField(
-                cursorColor: Color(0xFFD72323),
+                cursorColor: AppColors.accent,
                 decoration: _buildInputDecoration('Nome do Produto'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -143,7 +180,7 @@ class _AddProdutosState extends State<AddProdutos> {
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                cursorColor: Color(0xFFD72323),
+                cursorColor: AppColors.accent,
                 decoration: _buildInputDecoration('Preço do Produto'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -161,7 +198,7 @@ class _AddProdutosState extends State<AddProdutos> {
               ),
               SizedBox(height: 16.0),
               TextFormField(
-                cursorColor: Color(0xFFD72323),
+                cursorColor: AppColors.accent,
                 decoration: _buildInputDecoration('Quantidade'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -191,20 +228,20 @@ class _AddProdutosState extends State<AddProdutos> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-              TextButton(
+              TextButton.icon(
                 onPressed: _pickImageFromGallery,
-                child: Text(
+                icon: Icon(Icons.image_outlined, color: AppColors.accentSecondary),
+                label: Text(
                   _selectedImage == null
                       ? 'Selecionar Imagem do Produto'
                       : 'Imagem Selecionada',
-                  style: TextStyle(color: Colors.grey[700]),
+                  style: AppTextStyles.body,
                 ),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16.0),
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey[300]!),
+                  backgroundColor: AppColors.surfaceHigh,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
@@ -212,13 +249,11 @@ class _AddProdutosState extends State<AddProdutos> {
               CheckboxListTile(
                 title: Text(
                   'Produto em Estoque',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 value: _inStock,
                 checkColor: Colors.white,
-                activeColor: Color(0xFFD72323),
+                activeColor: AppColors.accent,
                 onChanged: (value) {
                   setState(() {
                     _inStock = value!;
@@ -227,22 +262,31 @@ class _AddProdutosState extends State<AddProdutos> {
               ),
               SizedBox(height: 10.0),
               ElevatedButton(
-                onPressed: _submit,
-                child: Text(
-                  'Adicionar Produto',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                onPressed: _isSaving ? null : _submit,
+                child: _isSaving
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Adicionar Produto',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(200, 50),
-                  backgroundColor: Color(0xFFD72323),
-                  padding: EdgeInsets.symmetric(vertical: 23.0),
+                  minimumSize: Size(double.infinity, 50),
+                  backgroundColor: AppColors.accent,
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  textStyle: TextStyle(fontSize: 18),
+                  textStyle: TextStyle(fontSize: 16),
                 ),
               ),
             ],

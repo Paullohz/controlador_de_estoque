@@ -3,6 +3,7 @@ import 'package:flutter_shiftsync/pages/add_produtos.dart';
 import 'package:flutter_shiftsync/pages/profilescreen.dart';
 import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
 import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 class MenuPage extends StatefulWidget {
@@ -41,48 +42,24 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidth = MediaQuery.of(context).size.width;
-
-    double toolbarHeight =
-        (screenHeight <= 740 && screenWidth <= 360) ? 60.0 : 65.0;
-
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        elevation: 0.0,
-        backgroundColor: const Color(0xff303841),
-        automaticallyImplyLeading: true,
-        toolbarHeight: toolbarHeight,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0, top: 15),
-            child: Text(
-              "LOGO",
-              style: TextStyle(
-                fontSize: 30,
-                color: Color(0xffD72323),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
         children: _screens,
       ),
       extendBody: true,
-      backgroundColor: Color(0xff303841),
+      backgroundColor: AppColors.ink,
       bottomNavigationBar: CurvedNavigationBar(
         index: _selectedIndex,
-        color: Color(0xff303841),
+        color: AppColors.surface,
         backgroundColor: Colors.transparent,
+        buttonBackgroundColor: AppColors.accent,
         items: const [
-          Icon(Icons.list_alt, size: 30, color: Color(0XFFD72323)),
-          Icon(Icons.add, size: 30, color: Color(0XFFD72323)),
-          Icon(Icons.person, size: 30, color: Color(0XFFD72323)),
+          Icon(Icons.list_alt, size: 28, color: AppColors.textLight),
+          Icon(Icons.add, size: 28, color: Colors.white),
+          Icon(Icons.person, size: 28, color: AppColors.textLight),
         ],
         onTap: _onItemTapped,
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -21,43 +23,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.ink,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xff3A4750),
+        backgroundColor: AppColors.ink,
         centerTitle: true,
-        title: const Text(
-          'LOGO',
-          style: TextStyle(
-            color: Color(0xFFD72323),
-            fontWeight: FontWeight.w600,
-            fontSize: 24.0,
-          ),
-        ),
+        title: const AppLogo(height: 28),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xff3A4750), Color(0xff3A4750)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.1, 0.7],
-            tileMode: TileMode.clamp,
-          ),
-        ),
+        color: AppColors.ink,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 50),
-              color: const Color(0xff3A4750),
-              child: const Center(
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 10),
+              color: AppColors.ink,
+              child: Center(
                 child: Text(
                   'Registre-se',
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xffffffff),
-                  ),
+                  style: AppTextStyles.heading,
                 ),
               ),
             ),
@@ -73,21 +57,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _nameController,
                         decoration: const InputDecoration(
                           labelText: 'Nome',
-                          labelStyle: TextStyle(color: Colors.white),
-                          prefixIcon: Icon(Icons.person, color: Color(0xFFD72323)),
+                          labelStyle: TextStyle(color: AppColors.textMuted),
+                          prefixIcon: Icon(Icons.person, color: AppColors.accent),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
                           ),
                           filled: true,
-                          fillColor: Color(0xff4D5C68),
+                          fillColor: AppColors.surfaceHigh,
                         ),
-                        style: const TextStyle(color: Colors.white),
+                        style: AppTextStyles.body,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, insira seu nome';
@@ -109,21 +93,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
                           labelText: 'Email',
-                          labelStyle: TextStyle(color: Colors.white),
-                          prefixIcon: Icon(Icons.email, color: Color(0xFFD72323)),
+                          labelStyle: TextStyle(color: AppColors.textMuted),
+                          prefixIcon: Icon(Icons.email, color: AppColors.accent),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
                           ),
                           filled: true,
-                          fillColor: Color(0xff4D5C68),
+                          fillColor: AppColors.surfaceHigh,
                         ),
-                        style: const TextStyle(color: Colors.white),
+                        style: AppTextStyles.body,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, insira seu email';
@@ -145,21 +129,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         obscureText: true,
                         decoration: const InputDecoration(
                           labelText: 'Senha',
-                          labelStyle: TextStyle(color: Colors.white),
-                          prefixIcon: Icon(Icons.lock, color: Color(0xFFD72323)),
+                          labelStyle: TextStyle(color: AppColors.textMuted),
+                          prefixIcon: Icon(Icons.lock, color: AppColors.accent),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
                           ),
                           filled: true,
-                          fillColor: Color(0xff4D5C68),
+                          fillColor: AppColors.surfaceHigh,
                         ),
-                        style: const TextStyle(color: Colors.white),
+                        style: AppTextStyles.body,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, insira sua senha';
@@ -181,21 +165,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
                           labelText: 'Telefone',
-                          labelStyle: TextStyle(color: Colors.white),
-                          prefixIcon: Icon(Icons.phone, color: Color(0xFFD72323)),
+                          labelStyle: TextStyle(color: AppColors.textMuted),
+                          prefixIcon: Icon(Icons.phone, color: AppColors.accent),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Color(0xFFD72323)),
+                            borderSide: BorderSide(color: AppColors.accent),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
                           ),
                           filled: true,
-                          fillColor: Color(0xff4D5C68),
+                          fillColor: AppColors.surfaceHigh,
                         ),
-                        style: const TextStyle(color: Colors.white),
+                        style: AppTextStyles.body,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, insira seu telefone';
@@ -231,7 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD72323),
+                          backgroundColor: AppColors.accent,
                           minimumSize: const Size(double.infinity, 50.0),
                         ),
                         child: const Text('Salvar'),
