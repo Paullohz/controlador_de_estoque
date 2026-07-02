@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
 import 'package:flutter_shiftsync/widgets/app_logo.dart';
 
@@ -15,210 +15,310 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
-  bool _allFieldsEmpty = true;
+  final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\-\.]+$');
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isRegistering = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() {
+      _isRegistering = true;
+    });
+
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'imageUrl': '',
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Conta criada com sucesso!')),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message;
+      if (e.code == 'email-already-in-use') {
+        message = 'Já existe uma conta com esse email.';
+      } else if (e.code == 'weak-password') {
+        message = 'Senha muito fraca. Use ao menos 6 caracteres.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Email inválido.';
+      } else {
+        message = 'Erro ao criar conta: ${e.message}';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro desconhecido: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRegistering = false;
+        });
+      }
+    }
+  }
+
+  InputDecoration _fieldDecoration(String hint, IconData icon, {Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: AppTextStyles.bodyMuted,
+      prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: AppColors.surfaceHigh,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTextStyles.label.copyWith(color: AppColors.accentSecondary),
+      ),
+    );
+  }
+
+  Widget _obscureToggle(bool obscured, VoidCallback onTap) {
+    return IconButton(
+      icon: Icon(
+        obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        color: AppColors.textMuted,
+        size: 20,
+      ),
+      onPressed: onTap,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.ink,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.ink,
-        centerTitle: true,
-        title: const AppLogo(height: 28),
-      ),
-      body: Container(
-        color: AppColors.ink,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 10),
-              color: AppColors.ink,
-              child: Center(
-                child: Text(
-                  'Registre-se',
-                  style: AppTextStyles.heading,
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.accent),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(27, 0, 27, 32),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Center(child: AppLogo(height: 44)),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Crie sua conta',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.display.copyWith(fontSize: 24),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Preencha seus dados para começar a controlar seu estoque',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                      const SizedBox(height: 32),
+                      _sectionLabel('Dados pessoais'),
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nome',
-                          labelStyle: TextStyle(color: AppColors.textMuted),
-                          prefixIcon: Icon(Icons.person, color: AppColors.accent),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceHigh,
-                        ),
+                        cursorColor: AppColors.accent,
                         style: AppTextStyles.body,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _fieldDecoration('Nome completo', Icons.person_outline),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira seu nome';
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Insira seu nome';
                           }
                           return null;
                         },
-                        onChanged: (value) {
-                          setState(() {
-                            _allFieldsEmpty = _nameController.text.isEmpty ||
-                                _emailController.text.isEmpty ||
-                                _passwordController.text.isEmpty ||
-                                _phoneController.text.isEmpty;
-                          });
-                        },
                       ),
-                      const SizedBox(height: 20.0),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: TextStyle(color: AppColors.textMuted),
-                          prefixIcon: Icon(Icons.email, color: AppColors.accent),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceHigh,
-                        ),
-                        style: AppTextStyles.body,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira seu email';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            _allFieldsEmpty = _nameController.text.isEmpty ||
-                                _emailController.text.isEmpty ||
-                                _passwordController.text.isEmpty ||
-                                _phoneController.text.isEmpty;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20.0),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Senha',
-                          labelStyle: TextStyle(color: AppColors.textMuted),
-                          prefixIcon: Icon(Icons.lock, color: AppColors.accent),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceHigh,
-                        ),
-                        style: AppTextStyles.body,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira sua senha';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            _allFieldsEmpty = _nameController.text.isEmpty ||
-                                _emailController.text.isEmpty ||
-                                _passwordController.text.isEmpty ||
-                                _phoneController.text.isEmpty;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20.0),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Telefone',
-                          labelStyle: TextStyle(color: AppColors.textMuted),
-                          prefixIcon: Icon(Icons.phone, color: AppColors.accent),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColors.accentSecondary, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceHigh,
-                        ),
+                        cursorColor: AppColors.accent,
                         style: AppTextStyles.body,
+                        keyboardType: TextInputType.phone,
+                        decoration: _fieldDecoration('Telefone', Icons.phone_outlined),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira seu telefone';
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Insira seu telefone';
                           }
                           return null;
                         },
-                        onChanged: (value) {
-                          setState(() {
-                            _allFieldsEmpty = _nameController.text.isEmpty ||
-                                _emailController.text.isEmpty ||
-                                _passwordController.text.isEmpty ||
-                                _phoneController.text.isEmpty;
-                          });
+                      ),
+                      const SizedBox(height: 28),
+                      _sectionLabel('Dados de acesso'),
+                      TextFormField(
+                        controller: _emailController,
+                        cursorColor: AppColors.accent,
+                        style: AppTextStyles.body,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: _fieldDecoration('Email', Icons.mail_outline),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Insira seu email';
+                          }
+                          if (!_emailRegex.hasMatch(value.trim())) {
+                            return 'Insira um email válido';
+                          }
+                          return null;
                         },
                       ),
-                      const SizedBox(height: 40.0),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _passwordController,
+                        cursorColor: AppColors.accent,
+                        style: AppTextStyles.body,
+                        obscureText: _obscurePassword,
+                        decoration: _fieldDecoration(
+                          'Senha',
+                          Icons.lock_outline,
+                          suffixIcon: _obscureToggle(_obscurePassword, () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          }),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Crie uma senha';
+                          }
+                          if (value.length < 6) {
+                            return 'Use ao menos 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        cursorColor: AppColors.accent,
+                        style: AppTextStyles.body,
+                        obscureText: _obscureConfirmPassword,
+                        decoration: _fieldDecoration(
+                          'Confirmar senha',
+                          Icons.lock_reset_outlined,
+                          suffixIcon: _obscureToggle(_obscureConfirmPassword, () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          }),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Confirme sua senha';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'As senhas não coincidem';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 32),
                       ElevatedButton(
-                        onPressed: _allFieldsEmpty
-                            ? null
-                            : () async {
-                                if (_formKey.currentState!.validate()) {
-                                  try {
-                                    await _registerUser();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Registro realizado com sucesso!')),
-                                    );
-                                    Navigator.pushReplacementNamed(context, '/login');
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Erro ao registrar: $e')),
-                                    );
-                                  }
-                                }
-                              },
+                        onPressed: _isRegistering ? null : _register,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           minimumSize: const Size(double.infinity, 50.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
                         ),
-                        child: const Text('Salvar'),
+                        child: _isRegistering
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                'Criar conta',
+                                style: AppTextStyles.body.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Já tem uma conta?', style: AppTextStyles.bodyMuted),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Entrar',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.accentSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -229,24 +329,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _registerUser() async {
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
-      // Grava os dados adicionais no Realtime Database
-      DatabaseReference usersRef = FirebaseDatabase.instance.ref().child('users');
-      await usersRef.child(userCredential.user!.uid).set({
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'phone': _phoneController.text,
-      });
-    } catch (e) {
-      rethrow;
-    }
   }
 }

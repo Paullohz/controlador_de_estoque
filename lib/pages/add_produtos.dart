@@ -25,12 +25,14 @@ class _AddProdutosState extends State<AddProdutos> {
   File? _selectedImage;
   bool _isSaving = false;
 
-  InputDecoration _buildInputDecoration(String labelText) {
+  InputDecoration _buildInputDecoration(String hint, IconData icon) {
     return InputDecoration(
-      labelText: labelText,
-      labelStyle: TextStyle(color: AppColors.textMuted),
+      hintText: hint,
+      hintStyle: AppTextStyles.bodyMuted,
+      prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
       filled: true,
-      fillColor: AppColors.surfaceHigh,
+      fillColor: AppColors.surface,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         borderSide: BorderSide.none,
@@ -42,6 +44,16 @@ class _AddProdutosState extends State<AddProdutos> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTextStyles.label.copyWith(color: AppColors.accentSecondary),
       ),
     );
   }
@@ -63,11 +75,13 @@ class _AddProdutosState extends State<AddProdutos> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Erro'),
-        content: Text(message),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        title: Text('Erro', style: AppTextStyles.subheading),
+        content: Text(message, style: AppTextStyles.body),
         actions: <Widget>[
           TextButton(
-            child: Text('OK'),
+            child: Text('OK', style: TextStyle(color: AppColors.accent)),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -111,11 +125,16 @@ class _AddProdutosState extends State<AddProdutos> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Produto Adicionado'),
-          content: Text('Nome: $_productName\nPreço: R\$ $_productPrice'),
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          title: Text('Produto adicionado', style: AppTextStyles.subheading),
+          content: Text(
+            'Nome: $_productName\nPreço: R\$ $_productPrice',
+            style: AppTextStyles.body,
+          ),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: Text('OK', style: TextStyle(color: AppColors.accent)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -148,6 +167,53 @@ class _AddProdutosState extends State<AddProdutos> {
     }
   }
 
+  Widget _buildPhotoPicker() {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: _pickImageFromGallery,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.surfaceHigh, width: 1.5),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _selectedImage != null
+                    ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                    : Icon(Icons.photo_outlined, color: AppColors.accentSecondary, size: 30),
+              ),
+              Positioned(
+                bottom: -4,
+                right: -4,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.ink, width: 3),
+                  ),
+                  child: const Icon(Icons.camera_alt, size: 14, color: AppColors.ink),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _selectedImage == null ? 'Toque para adicionar uma foto' : 'Toque para trocar a foto',
+          style: AppTextStyles.bodyMuted,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,18 +222,22 @@ class _AddProdutosState extends State<AddProdutos> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: <Widget>[
-              Text('Adicionar Produto', style: AppTextStyles.heading),
+              Text('Adicionar produto', style: AppTextStyles.heading),
               const SizedBox(height: 4),
               Text(
-                'Preencha os dados do novo produto',
+                'Cadastre um novo item no estoque',
                 style: AppTextStyles.bodyMuted,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
+              Center(child: _buildPhotoPicker()),
+              const SizedBox(height: 28),
+              _sectionLabel('Detalhes'),
               TextFormField(
                 cursorColor: AppColors.accent,
-                decoration: _buildInputDecoration('Nome do Produto'),
+                style: AppTextStyles.body,
+                decoration: _buildInputDecoration('Nome do produto', Icons.sell_outlined),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira o nome do produto';
@@ -178,93 +248,86 @@ class _AddProdutosState extends State<AddProdutos> {
                   _productName = value!;
                 },
               ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                cursorColor: AppColors.accent,
-                decoration: _buildInputDecoration('Preço do Produto'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, insira o preço do produto';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Por favor, insira um número válido';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _productPrice = double.parse(value!);
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                cursorColor: AppColors.accent,
-                decoration: _buildInputDecoration('Quantidade'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, insira a quantidade do produto';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Por favor, insira um número válido';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _productQuantity = int.parse(value!);
-                },
-              ),
-              SizedBox(height: 16.0),
-              if (_selectedImage != null)
-                Container(
-                  width: 100,
-                  height: 100,
-                  margin: EdgeInsets.only(bottom: 16.0), // Espaço entre a imagem e o botão
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: FileImage(_selectedImage!),
-                      fit: BoxFit.cover,
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      cursorColor: AppColors.accent,
+                      style: AppTextStyles.body,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _buildInputDecoration('Preço', Icons.attach_money),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Insira o preço';
+                        }
+                        if (double.tryParse(value) == null) {
+                          return 'Valor inválido';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        _productPrice = double.parse(value!);
+                      },
                     ),
-                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                ),
-              TextButton.icon(
-                onPressed: _pickImageFromGallery,
-                icon: Icon(Icons.image_outlined, color: AppColors.accentSecondary),
-                label: Text(
-                  _selectedImage == null
-                      ? 'Selecionar Imagem do Produto'
-                      : 'Imagem Selecionada',
-                  style: AppTextStyles.body,
-                ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  backgroundColor: AppColors.surfaceHigh,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      cursorColor: AppColors.accent,
+                      style: AppTextStyles.body,
+                      keyboardType: TextInputType.number,
+                      decoration: _buildInputDecoration('Qtd.', Icons.inventory_2_outlined),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Insira a qtd.';
+                        }
+                        if (int.tryParse(value) == null) {
+                          return 'Valor inválido';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        _productQuantity = int.parse(value!);
+                      },
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _sectionLabel('Estoque'),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Produto em estoque',
+                        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Switch(
+                      value: _inStock,
+                      activeColor: AppColors.accent,
+                      onChanged: (value) {
+                        setState(() {
+                          _inStock = value;
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 16.0),
-              CheckboxListTile(
-                title: Text(
-                  'Produto em Estoque',
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-                ),
-                value: _inStock,
-                checkColor: Colors.white,
-                activeColor: AppColors.accent,
-                onChanged: (value) {
-                  setState(() {
-                    _inStock = value!;
-                  });
-                },
-              ),
-              SizedBox(height: 10.0),
+              const SizedBox(height: 28),
               ElevatedButton(
                 onPressed: _isSaving ? null : _submit,
                 child: _isSaving
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
@@ -273,20 +336,20 @@ class _AddProdutosState extends State<AddProdutos> {
                         ),
                       )
                     : Text(
-                        'Adicionar Produto',
-                        style: TextStyle(
+                        'Adicionar produto',
+                        style: AppTextStyles.body.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                   backgroundColor: AppColors.accent,
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  textStyle: TextStyle(fontSize: 16),
+                  textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
             ],
