@@ -15,36 +15,69 @@ const _unidadeOptions = <String>[
   'metro',
 ];
 
-class AddProdutos extends StatefulWidget {
-  const AddProdutos({Key? key}) : super(key: key);
+/// Resultado devolvido pela tela de edição: ou o produto foi atualizado,
+/// ou o usuário pediu pra excluí-lo (a exclusão de fato é feita por quem
+/// chamou a tela, pra não duplicar a chamada ao repositório).
+class ProdutoEditResult {
+  final Produto? updated;
+  final bool deleted;
 
-  @override
-  _AddProdutosState createState() => _AddProdutosState();
+  const ProdutoEditResult.updated(Produto produto)
+      : updated = produto,
+        deleted = false;
+
+  const ProdutoEditResult.deleted()
+      : updated = null,
+        deleted = true;
 }
 
-class _AddProdutosState extends State<AddProdutos> {
+class EditProdutoScreen extends StatefulWidget {
+  final Produto produto;
+
+  const EditProdutoScreen({Key? key, required this.produto}) : super(key: key);
+
+  @override
+  State<EditProdutoScreen> createState() => _EditProdutoScreenState();
+}
+
+class _EditProdutoScreenState extends State<EditProdutoScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProdutosRepository _repository = ProdutosRepository();
 
-  final _nameController = TextEditingController();
-  final _categoriaController = TextEditingController();
-  final _skuController = TextEditingController();
-  final _descricaoController = TextEditingController();
-  final _quantidadeController = TextEditingController();
-  final _estoqueMinimoController = TextEditingController();
-  final _fornecedorController = TextEditingController();
-  final _localizacaoController = TextEditingController();
-  final _precoCustoController = TextEditingController();
-  final _precoVendaController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _categoriaController;
+  late final TextEditingController _skuController;
+  late final TextEditingController _descricaoController;
+  late final TextEditingController _quantidadeController;
+  late final TextEditingController _estoqueMinimoController;
+  late final TextEditingController _fornecedorController;
+  late final TextEditingController _localizacaoController;
+  late final TextEditingController _precoCustoController;
+  late final TextEditingController _precoVendaController;
 
-  String _unidade = 'unidade';
+  late String _unidade;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+    final produto = widget.produto;
+    _nameController = TextEditingController(text: produto.nome);
+    _categoriaController = TextEditingController(text: produto.categoria);
+    _skuController = TextEditingController(text: produto.sku ?? '');
+    _descricaoController = TextEditingController(text: produto.descricao ?? '');
+    _quantidadeController = TextEditingController(text: produto.quantidade.toString());
+    _estoqueMinimoController = TextEditingController(
+      text: produto.estoqueMinimo?.toString() ?? '',
+    );
+    _fornecedorController = TextEditingController(text: produto.fornecedor ?? '');
+    _localizacaoController = TextEditingController(text: produto.localizacao ?? '');
+    _precoCustoController = TextEditingController(text: produto.precoCusto.toStringAsFixed(2));
+    _precoVendaController = TextEditingController(text: produto.preco.toStringAsFixed(2));
+    _unidade = _unidadeOptions.contains(produto.unidade) ? produto.unidade : 'unidade';
+
     // Redesenha o ícone do produto e o indicador de estoque conforme
-    // o usuário digita.
+    // o usuário edita.
     _nameController.addListener(_refresh);
     _quantidadeController.addListener(_refresh);
     _estoqueMinimoController.addListener(_refresh);
@@ -70,7 +103,7 @@ class _AddProdutosState extends State<AddProdutos> {
     super.dispose();
   }
 
-  InputDecoration _buildInputDecoration(String hint, IconData icon) {
+  InputDecoration _fieldDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTextStyles.bodyMuted,
@@ -88,7 +121,7 @@ class _AddProdutosState extends State<AddProdutos> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
       ),
     );
   }
@@ -107,26 +140,6 @@ class _AddProdutosState extends State<AddProdutos> {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: Text('(opcional)', style: AppTextStyles.bodyMuted.copyWith(fontSize: 11)),
-    );
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-        title: Text('Erro', style: AppTextStyles.subheading),
-        content: Text(message, style: AppTextStyles.body),
-        actions: <Widget>[
-          TextButton(
-            child: Text('OK', style: TextStyle(color: AppColors.accent)),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
     );
   }
 
@@ -168,77 +181,102 @@ class _AddProdutosState extends State<AddProdutos> {
     );
   }
 
-  Future<void> _submit() async {
+  Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() {
       _isSaving = true;
     });
 
+    final name = _nameController.text.trim();
+    final categoria = _categoriaController.text.trim();
+    final quantidade = int.parse(_quantidadeController.text);
+    final precoCusto = double.parse(_precoCustoController.text.replaceAll(',', '.'));
+    final precoVenda = double.parse(_precoVendaController.text.replaceAll(',', '.'));
+    final sku = _skuController.text.trim().isEmpty ? null : _skuController.text.trim();
+    final estoqueMinimo = _estoqueMinimoController.text.trim().isEmpty
+        ? null
+        : int.tryParse(_estoqueMinimoController.text.trim());
+    final fornecedor = _fornecedorController.text.trim().isEmpty ? null : _fornecedorController.text.trim();
+    final descricao = _descricaoController.text.trim().isEmpty ? null : _descricaoController.text.trim();
+    final localizacao = _localizacaoController.text.trim().isEmpty ? null : _localizacaoController.text.trim();
+
     try {
-      final nome = _nameController.text.trim();
+      await _repository.updateProduto(widget.produto.id, {
+        'nome': name,
+        'categoria': categoria,
+        'quantidade': quantidade,
+        'unidade': _unidade,
+        'precoCusto': precoCusto,
+        'preco': precoVenda,
+        'sku': sku,
+        'estoqueMinimo': estoqueMinimo,
+        'fornecedor': fornecedor,
+        'descricao': descricao,
+        'localizacao': localizacao,
+      });
 
-      Produto newProduto = Produto(
-        icone: '',
-        nome: nome,
-        categoria: _categoriaController.text.trim(),
-        quantidade: int.parse(_quantidadeController.text),
+      if (!mounted) return;
+
+      final updated = Produto(
+        id: widget.produto.id,
+        icone: widget.produto.icone,
+        nome: name,
+        categoria: categoria,
+        quantidade: quantidade,
         unidade: _unidade,
-        precoCusto: double.parse(_precoCustoController.text.replaceAll(',', '.')),
-        preco: double.parse(_precoVendaController.text.replaceAll(',', '.')),
-        sku: _skuController.text.trim().isEmpty ? null : _skuController.text.trim(),
-        estoqueMinimo: _estoqueMinimoController.text.trim().isEmpty
-            ? null
-            : int.tryParse(_estoqueMinimoController.text.trim()),
-        fornecedor: _fornecedorController.text.trim().isEmpty ? null : _fornecedorController.text.trim(),
-        descricao: _descricaoController.text.trim().isEmpty ? null : _descricaoController.text.trim(),
-        localizacao: _localizacaoController.text.trim().isEmpty ? null : _localizacaoController.text.trim(),
+        precoCusto: precoCusto,
+        preco: precoVenda,
+        favorito: widget.produto.favorito,
+        sku: sku,
+        estoqueMinimo: estoqueMinimo,
+        fornecedor: fornecedor,
+        descricao: descricao,
+        localizacao: localizacao,
       );
 
-      await _repository.addProduto(newProduto);
+      Navigator.pop(context, ProdutoEditResult.updated(updated));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível salvar: $e')),
+      );
+    }
+  }
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-          title: Text('Produto adicionado', style: AppTextStyles.subheading),
-          content: Text(
-            'Nome: $nome\nPreço de venda: R\$ ${_precoVendaController.text}',
-            style: AppTextStyles.body,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK', style: TextStyle(color: AppColors.accent)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        title: Text('Excluir produto', style: AppTextStyles.subheading),
+        content: Text(
+          'Tem certeza que deseja excluir "${widget.produto.nome}"? Essa ação não pode ser desfeita.',
+          style: AppTextStyles.body,
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: AppTextStyles.bodyMuted),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Excluir',
+              style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
 
-      // Limpar o formulário após adicionar o produto
-      _formKey.currentState?.reset();
-      _nameController.clear();
-      _categoriaController.clear();
-      _skuController.clear();
-      _descricaoController.clear();
-      _quantidadeController.clear();
-      _estoqueMinimoController.clear();
-      _fornecedorController.clear();
-      _localizacaoController.clear();
-      _precoCustoController.clear();
-      _precoVendaController.clear();
-      setState(() {
-        _unidade = 'unidade';
-        _isSaving = false;
-      });
-    } catch (error) {
-      setState(() {
-        _isSaving = false;
-      });
-      _showErrorDialog('Ocorreu um erro ao adicionar o produto: $error');
+    if (confirmed == true) {
+      if (!mounted) return;
+      Navigator.pop(context, const ProdutoEditResult.deleted());
     }
   }
 
@@ -246,30 +284,27 @@ class _AddProdutosState extends State<AddProdutos> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.ink,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.ink,
+        title: Text('Editar produto', style: AppTextStyles.heading),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.accent),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: <Widget>[
-              Text('Adicionar produto', style: AppTextStyles.heading),
-              const SizedBox(height: 4),
-              Text(
-                'Cadastre um novo item no estoque',
-                style: AppTextStyles.bodyMuted,
-              ),
-              const SizedBox(height: 24),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+            children: [
               Center(
-                child: Column(
-                  children: [
-                    ProductAvatar(nome: _nameController.text, size: 84, radius: AppRadius.lg),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Ícone gerado a partir do nome do produto',
-                      style: AppTextStyles.bodyMuted,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                child: ProductAvatar(
+                  nome: _nameController.text,
+                  imageUrl: widget.produto.icone,
+                  size: 84,
+                  radius: AppRadius.lg,
                 ),
               ),
               const SizedBox(height: 28),
@@ -279,7 +314,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 controller: _nameController,
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
-                decoration: _buildInputDecoration('Nome do produto', Icons.sell_outlined),
+                decoration: _fieldDecoration('Nome do produto', Icons.sell_outlined),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Insira o nome do produto';
@@ -292,7 +327,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 controller: _categoriaController,
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
-                decoration: _buildInputDecoration('Categoria', Icons.category_outlined),
+                decoration: _fieldDecoration('Categoria', Icons.category_outlined),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Insira a categoria';
@@ -312,7 +347,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 controller: _skuController,
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
-                decoration: _buildInputDecoration('Ex.: SKU-0001', Icons.qr_code_2_outlined),
+                decoration: _fieldDecoration('Ex.: SKU-0001', Icons.qr_code_2_outlined),
               ),
               const SizedBox(height: 12),
               Row(
@@ -327,7 +362,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
                 maxLines: 3,
-                decoration: _buildInputDecoration('Detalhes do produto', Icons.notes_outlined),
+                decoration: _fieldDecoration('Detalhes do produto', Icons.notes_outlined),
               ),
 
               const SizedBox(height: 24),
@@ -341,7 +376,7 @@ class _AddProdutosState extends State<AddProdutos> {
                       cursorColor: AppColors.accent,
                       style: AppTextStyles.body,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: _buildInputDecoration('Preço de custo', Icons.shopping_cart_outlined),
+                      decoration: _fieldDecoration('Preço de custo', Icons.shopping_cart_outlined),
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Insira o custo';
                         if (double.tryParse(value.replaceAll(',', '.')) == null) return 'Valor inválido';
@@ -356,7 +391,7 @@ class _AddProdutosState extends State<AddProdutos> {
                       cursorColor: AppColors.accent,
                       style: AppTextStyles.body,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: _buildInputDecoration('Preço de venda', Icons.attach_money),
+                      decoration: _fieldDecoration('Preço de venda', Icons.attach_money),
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Insira o preço';
                         if (double.tryParse(value.replaceAll(',', '.')) == null) return 'Valor inválido';
@@ -384,7 +419,7 @@ class _AddProdutosState extends State<AddProdutos> {
                       cursorColor: AppColors.accent,
                       style: AppTextStyles.body,
                       keyboardType: TextInputType.number,
-                      decoration: _buildInputDecoration('Quantidade', Icons.inventory_2_outlined),
+                      decoration: _fieldDecoration('Quantidade', Icons.inventory_2_outlined),
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Insira a qtd.';
                         if (int.tryParse(value) == null) return 'Valor inválido';
@@ -399,7 +434,7 @@ class _AddProdutosState extends State<AddProdutos> {
                       dropdownColor: AppColors.surface,
                       style: AppTextStyles.body,
                       icon: Icon(Icons.expand_more, color: AppColors.textMuted),
-                      decoration: _buildInputDecoration('Unidade', Icons.straighten),
+                      decoration: _fieldDecoration('Unidade', Icons.straighten),
                       items: _unidadeOptions
                           .map((u) => DropdownMenuItem(value: u, child: Text(u)))
                           .toList(),
@@ -423,7 +458,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
                 keyboardType: TextInputType.number,
-                decoration: _buildInputDecoration('Ex.: 5', Icons.warning_amber_outlined),
+                decoration: _fieldDecoration('Ex.: 5', Icons.warning_amber_outlined),
                 validator: (value) {
                   if (value != null && value.isNotEmpty && int.tryParse(value) == null) {
                     return 'Valor inválido';
@@ -445,7 +480,7 @@ class _AddProdutosState extends State<AddProdutos> {
                 controller: _fornecedorController,
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
-                decoration: _buildInputDecoration('Nome do fornecedor', Icons.local_shipping_outlined),
+                decoration: _fieldDecoration('Nome do fornecedor', Icons.local_shipping_outlined),
               ),
               const SizedBox(height: 12),
               Row(
@@ -459,12 +494,19 @@ class _AddProdutosState extends State<AddProdutos> {
                 controller: _localizacaoController,
                 cursorColor: AppColors.accent,
                 style: AppTextStyles.body,
-                decoration: _buildInputDecoration('Ex.: Prateleira A3', Icons.place_outlined),
+                decoration: _fieldDecoration('Ex.: Prateleira A3', Icons.place_outlined),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _isSaving ? null : _submit,
+                onPressed: _isSaving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: AppColors.accent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
                 child: _isSaving
                     ? const SizedBox(
                         width: 22,
@@ -475,20 +517,23 @@ class _AddProdutosState extends State<AddProdutos> {
                         ),
                       )
                     : Text(
-                        'Adicionar produto',
+                        'Salvar alterações',
                         style: AppTextStyles.body.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: AppColors.accent,
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _isSaving ? null : _confirmDelete,
+                style: TextButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
+                child: Text(
+                  'Excluir produto',
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600,
                   ),
-                  textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
             ],

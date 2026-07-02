@@ -14,6 +14,17 @@ class AppColors {
   static const textLight = Color(0xFFF3F1EC);
   static const textMuted = Color(0xFF9BA3AE);
   static const danger = Color(0xFFE05353); // só para exclusão/erro, não é cor de marca
+  static const warning = Color(0xFFD9A441); // alertas leves, ex.: estoque baixo
+
+  // Paleta usada pelo ícone gerado de produto (ProductAvatar): cada produto
+  // recebe uma cor com base no nome, sem depender de foto enviada.
+  static const productPalette = <Color>[
+    accent,
+    accentSecondary,
+    Color(0xFFD9A441), // âmbar
+    Color(0xFF7FA8D9), // azul suave
+    Color(0xFFCB7B72), // terracota suave
+  ];
 }
 
 class AppSpacing {

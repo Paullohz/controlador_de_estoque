@@ -1,85 +1,31 @@
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/product_avatar.dart';
 
-class SlidableCustom extends StatefulWidget {
+class SlidableCustom extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? imageurl;
+  final bool favorito;
+  final Color? subtitleColor;
   final VoidCallback action1;
   final VoidCallback action2;
   final Function() onDelete;
-  final Function(String newImageUrl)? onImageUpdated;
+  final VoidCallback? onToggleFavorite;
 
   const SlidableCustom({
     Key? key,
     required this.title,
     required this.subtitle,
     this.imageurl,
+    this.favorito = false,
+    this.subtitleColor,
     required this.action1,
     required this.action2,
     required this.onDelete,
-    this.onImageUpdated,
+    this.onToggleFavorite,
   }) : super(key: key);
-
-  @override
-  _SlidableCustomState createState() => _SlidableCustomState();
-}
-
-class _SlidableCustomState extends State<SlidableCustom> {
-  String? _imageUrl;
-  bool _isUploading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _imageUrl = widget.imageurl;
-  }
-
-  @override
-  void didUpdateWidget(covariant SlidableCustom oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageurl != widget.imageurl) {
-      _imageUrl = widget.imageurl;
-    }
-  }
-
-  Future<void> _selectImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return;
-
-    setState(() {
-      _isUploading = true;
-    });
-
-    try {
-      final fileName = 'produtos/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child(fileName);
-      final uploadTask = await ref.putFile(File(pickedFile.path));
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      setState(() {
-        _imageUrl = downloadUrl;
-        _isUploading = false;
-      });
-
-      widget.onImageUpdated?.call(downloadUrl);
-    } catch (e) {
-      print('Erro ao enviar imagem: $e');
-      setState(() {
-        _isUploading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível enviar a imagem.')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +38,7 @@ class _SlidableCustomState extends State<SlidableCustom> {
             motion: const DrawerMotion(),
             children: [
               SlidableAction(
-                onPressed: (context) => widget.action1(),
+                onPressed: (context) => action1(),
                 backgroundColor: AppColors.accentSecondary,
                 foregroundColor: AppColors.ink,
                 icon: Icons.edit,
@@ -112,10 +58,7 @@ class _SlidableCustomState extends State<SlidableCustom> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: _buildImage(),
-                ),
+                ProductAvatar(nome: title, imageUrl: imageurl, size: 54, radius: AppRadius.sm),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -123,21 +66,29 @@ class _SlidableCustomState extends State<SlidableCustom> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        widget.title,
+                        title,
                         style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.subtitle,
+                        subtitle,
                         style: AppTextStyles.body.copyWith(
-                          color: AppColors.accentSecondary,
+                          color: subtitleColor ?? AppColors.accentSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  onPressed: onToggleFavorite,
+                  icon: Icon(
+                    favorito ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: favorito ? AppColors.accent : AppColors.textMuted,
+                  ),
+                  tooltip: favorito ? 'Remover dos favoritos' : 'Marcar como favorito',
                 ),
               ],
             ),
@@ -145,66 +96,6 @@ class _SlidableCustomState extends State<SlidableCustom> {
         ),
       ),
     );
-  }
-
-  Widget _buildImage() {
-    if (_isUploading) {
-      return const SizedBox(
-        width: 54,
-        height: 54,
-        child: Padding(
-          padding: EdgeInsets.all(14),
-          child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.accentSecondary),
-        ),
-      );
-    }
-    if (_imageUrl != null && _imageUrl!.isNotEmpty) {
-      return GestureDetector(
-        onTap: _selectImage,
-        child: Image.network(
-          _imageUrl!,
-          width: 54,
-          height: 54,
-          fit: BoxFit.cover,
-          errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-            return Container(
-              width: 54,
-              height: 54,
-              color: AppColors.surfaceHigh,
-              child: const Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
-            );
-          },
-          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-            if (loadingProgress == null) {
-              return child;
-            }
-            return SizedBox(
-              width: 54,
-              height: 54,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.accentSecondary,
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      return GestureDetector(
-        onTap: _selectImage,
-        child: Container(
-          width: 54,
-          height: 54,
-          color: AppColors.surfaceHigh,
-          child: const Icon(Icons.photo_camera_outlined, color: AppColors.textMuted),
-        ),
-      );
-    }
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
@@ -219,7 +110,7 @@ class _SlidableCustomState extends State<SlidableCustom> {
           ),
           title: Text('Confirmar Exclusão', style: AppTextStyles.subheading),
           content: Text(
-            'Tem certeza que deseja excluir ${widget.title}?',
+            'Tem certeza que deseja excluir $title?',
             style: AppTextStyles.body,
           ),
           actions: <Widget>[
@@ -232,7 +123,7 @@ class _SlidableCustomState extends State<SlidableCustom> {
             TextButton(
               child: Text('Excluir', style: TextStyle(color: AppColors.danger)),
               onPressed: () {
-                widget.onDelete();
+                onDelete();
                 Navigator.of(context).pop();
               },
             ),

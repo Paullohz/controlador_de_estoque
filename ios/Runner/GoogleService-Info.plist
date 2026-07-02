@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAtKpzxQ9-9g-u4v1Rsjbu6Esrsr7Y2r-U</string>
+	<key>GCM_SENDER_ID</key>
+	<string>209793279994</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.flutterShiftsync</string>
+	<key>PROJECT_ID</key>
+	<string>controle-estoque-c7892</string>
+	<key>STORAGE_BUCKET</key>
+	<string>controle-estoque-c7892.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false></false>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:209793279994:ios:e293dbec56ffe569776643</string>
+</dict>
+</plist>

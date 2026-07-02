@@ -38,4 +38,12 @@ class ProdutosRepository {
   Future<void> updateProdutoIcone(String id, String icone) async {
     await collection.doc(id).update({'icone': icone});
   }
+
+  Future<void> updateProduto(String id, Map<String, dynamic> data) async {
+    await collection.doc(id).update(data);
+  }
+
+  Future<void> setFavorito(String id, bool favorito) async {
+    await collection.doc(id).update({'favorito': favorito});
+  }
 }

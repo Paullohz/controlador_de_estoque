@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
+import 'package:flutter_shiftsync/pages/edit_produto.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
 import 'package:flutter_shiftsync/widgets/app_logo.dart';
@@ -54,19 +55,49 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
     }
   }
 
-  void _updateProductImage(String productId, String newImageUrl) async {
+  void _replaceProduct(Produto updated) {
+    setState(() {
+      final idxAll = _allProducts.indexWhere((p) => p.id == updated.id);
+      if (idxAll != -1) _allProducts[idxAll] = updated;
+      final idxDisplayed = _displayedProducts.indexWhere((p) => p.id == updated.id);
+      if (idxDisplayed != -1) _displayedProducts[idxDisplayed] = updated;
+    });
+  }
+
+  Future<void> _toggleFavorite(Produto produto) async {
+    final novoValor = !produto.favorito;
+
+    // Atualização otimista: reflete na hora, desfaz se a gravação falhar.
+    setState(() {
+      produto.favorito = novoValor;
+    });
+
     try {
-      await produtosRepository.updateProdutoIcone(productId, newImageUrl);
-      setState(() {
-        for (var produto in _allProducts) {
-          if (produto.id == productId) produto.icone = newImageUrl;
-        }
-        for (var produto in _displayedProducts) {
-          if (produto.id == productId) produto.icone = newImageUrl;
-        }
-      });
+      await produtosRepository.setFavorito(produto.id, novoValor);
     } catch (error) {
-      print('Erro ao atualizar imagem do produto: $error');
+      setState(() {
+        produto.favorito = !novoValor;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível atualizar o favorito.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _editProduct(Produto produto) async {
+    final result = await Navigator.push<ProdutoEditResult>(
+      context,
+      MaterialPageRoute(builder: (context) => EditProdutoScreen(produto: produto)),
+    );
+
+    if (result == null) return;
+
+    if (result.deleted) {
+      _removeProduct(produto.id);
+    } else if (result.updated != null) {
+      _replaceProduct(result.updated!);
     }
   }
 
@@ -123,30 +154,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
             ),
             Expanded(
               child: _displayedProducts.isNotEmpty
-                  ? ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                      itemCount: _displayedProducts.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        var produto = _displayedProducts[index];
-                        return SlidableCustom(
-                          title: produto.nome,
-                          subtitle: 'R\$ ${produto.preco.toStringAsFixed(2)}',
-                          imageurl: produto.icone,
-                          action1: () async {
-                            // Ação de editar
-                          },
-                          action2: () {
-                            _removeProduct(produto.id);
-                          },
-                          onDelete: () {
-                            _removeProduct(produto.id);
-                          },
-                          onImageUpdated: (newImageUrl) {
-                            _updateProductImage(produto.id, newImageUrl);
-                          },
-                        );
-                      },
-                    )
+                  ? _buildProductList()
                   : Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -165,6 +173,64 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTextStyles.label.copyWith(color: AppColors.accentSecondary),
+      ),
+    );
+  }
+
+  Widget _buildProductTile(Produto produto) {
+    final subtitleColor = produto.quantidade <= 0
+        ? AppColors.danger
+        : produto.estoqueBaixo
+            ? AppColors.warning
+            : null;
+
+    return SlidableCustom(
+      title: produto.nome,
+      subtitle: 'R\$ ${produto.preco.toStringAsFixed(2)} · ${produto.quantidade} ${produto.unidade}',
+      imageurl: produto.icone,
+      favorito: produto.favorito,
+      subtitleColor: subtitleColor,
+      action1: () async {
+        await _editProduct(produto);
+      },
+      action2: () {
+        _removeProduct(produto.id);
+      },
+      onDelete: () {
+        _removeProduct(produto.id);
+      },
+      onToggleFavorite: () {
+        _toggleFavorite(produto);
+      },
+    );
+  }
+
+  Widget _buildProductList() {
+    final favoritos = _displayedProducts.where((p) => p.favorito).toList();
+    final outros = _displayedProducts.where((p) => !p.favorito).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      children: [
+        if (favoritos.isNotEmpty) ...[
+          _buildSectionLabel('Favoritos'),
+          ...favoritos.map(_buildProductTile),
+          const SizedBox(height: 12),
+        ],
+        if (outros.isNotEmpty) ...[
+          if (favoritos.isNotEmpty) _buildSectionLabel('Todos os produtos'),
+          ...outros.map(_buildProductTile),
+        ],
+      ],
     );
   }
 }

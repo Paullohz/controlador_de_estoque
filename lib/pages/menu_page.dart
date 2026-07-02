@@ -4,7 +4,7 @@ import 'package:flutter_shiftsync/pages/profilescreen.dart';
 import 'package:flutter_shiftsync/pages/ProductsListScreen.dart';
 import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:flutter_shiftsync/widgets/app_bottom_bar.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({Key? key}) : super(key: key);
@@ -51,16 +51,8 @@ class _MenuPageState extends State<MenuPage> {
       ),
       extendBody: true,
       backgroundColor: AppColors.ink,
-      bottomNavigationBar: CurvedNavigationBar(
-        index: _selectedIndex,
-        color: AppColors.surface,
-        backgroundColor: Colors.transparent,
-        buttonBackgroundColor: AppColors.accent,
-        items: const [
-          Icon(Icons.list_alt, size: 28, color: AppColors.textLight),
-          Icon(Icons.add, size: 28, color: Colors.white),
-          Icon(Icons.person, size: 28, color: AppColors.textLight),
-        ],
+      bottomNavigationBar: AppBottomBar(
+        currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
     );
