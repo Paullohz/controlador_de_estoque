@@ -84,7 +84,3 @@ lib/
 ## Contribuindo
 
 Pull requests são bem-vindos. Pra mudanças maiores, abra uma issue antes pra alinharmos a ideia.
-
-## Licença
-
-Ainda sem licença definida — adicione um arquivo `LICENSE` (ex: MIT) se quiser deixar o uso claro para terceiros.
