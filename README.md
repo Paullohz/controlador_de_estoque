@@ -8,16 +8,34 @@ Cada conta é uma empresa: cadastre produtos, acompanhe o que está em estoque, 
   <table>
     <tr>
       <td align="center">
-        <img src="docs/screenshots/login.png" width="200" alt="Tela de login" /><br />
+        <img src="docs/screenshots/registro.png" width="180" alt="Criar conta" /><br />
+        <sub><b>Criar conta</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/login.png" width="180" alt="Tela de login" /><br />
         <sub><b>Login</b></sub>
       </td>
       <td align="center">
-        <img src="docs/screenshots/produtos.png" width="200" alt="Lista de produtos" /><br />
+        <img src="docs/screenshots/produtos.png" width="180" alt="Lista de produtos" /><br />
         <sub><b>Produtos</b></sub>
       </td>
       <td align="center">
-        <img src="docs/screenshots/adicionar.png" width="200" alt="Adicionar produto" /><br />
+        <img src="docs/screenshots/adicionar.png" width="180" alt="Adicionar produto" /><br />
         <sub><b>Adicionar produto</b></sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="docs/screenshots/produtos_edit.png" width="180" alt="Editar ou excluir produto" /><br />
+        <sub><b>Editar/excluir</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/perfil.png" width="180" alt="Perfil" /><br />
+        <sub><b>Perfil</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/editar_perfil.png" width="180" alt="Editar perfil" /><br />
+        <sub><b>Editar perfil</b></sub>
       </td>
     </tr>
   </table>

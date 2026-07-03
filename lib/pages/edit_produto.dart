@@ -236,6 +236,14 @@ class _EditProdutoScreenState extends State<EditProdutoScreen> {
         localizacao: localizacao,
       );
 
+      await showAppSuccessDialog(
+        context,
+        title: 'Produto atualizado',
+        message: '"$name" foi salvo com as novas informações.',
+        icon: Icons.check_circle_outline_rounded,
+      );
+
+      if (!mounted) return;
       Navigator.pop(context, ProdutoEditResult.updated(updated));
     } catch (e) {
       if (!mounted) return;
