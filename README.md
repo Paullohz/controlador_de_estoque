@@ -37,6 +37,10 @@ Cada conta é uma empresa: cadastre produtos, acompanhe o que está em estoque, 
         <img src="docs/screenshots/editar_perfil.png" width="180" alt="Editar perfil" /><br />
         <sub><b>Editar perfil</b></sub>
       </td>
+      <td align="center">
+        <img src="docs/screenshots/editar_produto.png" width="180" alt="Confirmação ao editar produto" /><br />
+        <sub><b>Produto atualizado</b></sub>
+      </td>
     </tr>
   </table>
 </p>
