@@ -153,6 +153,3 @@ lib/
 - [ ] Relatórios e exportação do estoque
 - [ ] Notificações de estoque baixo
 
-## Contribuindo
-
-Pull requests são bem-vindos. Pra mudanças maiores, abra uma issue antes pra alinharmos a ideia.
