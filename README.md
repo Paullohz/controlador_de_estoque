@@ -20,14 +20,18 @@ Cada conta é uma empresa: cadastre produtos, acompanhe o que está em estoque, 
         <sub><b>Produtos</b></sub>
       </td>
       <td align="center">
-        <img src="docs/screenshots/adicionar.png" width="180" alt="Adicionar produto" /><br />
-        <sub><b>Adicionar produto</b></sub>
+        <img src="docs/screenshots/produtos_edit.png" width="180" alt="Editar ou excluir produto" /><br />
+        <sub><b>Editar/excluir</b></sub>
       </td>
     </tr>
     <tr>
       <td align="center">
-        <img src="docs/screenshots/produtos_edit.png" width="180" alt="Editar ou excluir produto" /><br />
-        <sub><b>Editar/excluir</b></sub>
+        <img src="docs/screenshots/editar_produto.png" width="180" alt="Confirmação ao editar produto" /><br />
+        <sub><b>Produto atualizado</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/adicionar.png" width="180" alt="Adicionar produto" /><br />
+        <sub><b>Adicionar produto</b></sub>
       </td>
       <td align="center">
         <img src="docs/screenshots/perfil.png" width="180" alt="Perfil" /><br />
@@ -36,10 +40,6 @@ Cada conta é uma empresa: cadastre produtos, acompanhe o que está em estoque, 
       <td align="center">
         <img src="docs/screenshots/editar_perfil.png" width="180" alt="Editar perfil" /><br />
         <sub><b>Editar perfil</b></sub>
-      </td>
-      <td align="center">
-        <img src="docs/screenshots/editar_produto.png" width="180" alt="Confirmação ao editar produto" /><br />
-        <sub><b>Produto atualizado</b></sub>
       </td>
     </tr>
   </table>
