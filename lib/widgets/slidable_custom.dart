@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/product_avatar.dart';
 
 class SlidableCustom extends StatelessWidget {
@@ -99,37 +100,16 @@ class SlidableCustom extends StatelessWidget {
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context) async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          title: Text('Confirmar Exclusão', style: AppTextStyles.subheading),
-          content: Text(
-            'Tem certeza que deseja excluir $title?',
-            style: AppTextStyles.body,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancelar', style: AppTextStyles.bodyMuted),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Excluir', style: TextStyle(color: AppColors.danger)),
-              onPressed: () {
-                onDelete();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Excluir produto',
+      message: 'Tem certeza que deseja excluir "$title"? Essa ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      icon: Icons.delete_outline_rounded,
     );
+
+    if (confirmed) {
+      onDelete();
+    }
   }
 }

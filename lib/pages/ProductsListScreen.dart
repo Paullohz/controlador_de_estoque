@@ -3,6 +3,7 @@ import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/pages/edit_produto.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/app_logo.dart';
 import 'package:flutter_shiftsync/widgets/slidable_custom.dart';
 
@@ -79,9 +80,7 @@ class _ProductsListScreenState extends State<ProductsListScreen> {
         produto.favorito = !novoValor;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível atualizar o favorito.')),
-        );
+        showAppSnackBar(context, 'Não foi possível atualizar o favorito.', isError: true);
       }
     }
   }

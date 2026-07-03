@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/product_avatar.dart';
 
 const _unidadeOptions = <String>[
@@ -110,24 +111,48 @@ class _AddProdutosState extends State<AddProdutos> {
     );
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-        title: Text('Erro', style: AppTextStyles.subheading),
-        content: Text(message, style: AppTextStyles.body),
-        actions: <Widget>[
-          TextButton(
-            child: Text('OK', style: TextStyle(color: AppColors.accent)),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
+  void _showSuccessDialog({
+    required String nome,
+    required int quantidade,
+    required String unidade,
+    required double preco,
+  }) {
+    showAppSuccessDialog(
+      context,
+      title: 'Produto adicionado',
+      message: '"$nome" já está no seu estoque.',
+      extra: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceHigh,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _summaryItem('Quantidade', '$quantidade $unidade'),
+            _summaryItem('Preço de venda', 'R\$ ${preco.toStringAsFixed(2)}'),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _summaryItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: AppTextStyles.label),
+        const SizedBox(height: 2),
+        Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showAppErrorDialog(context, message: message);
   }
 
   Widget _buildStockStatus() {
@@ -197,25 +222,14 @@ class _AddProdutosState extends State<AddProdutos> {
 
       await _repository.addProduto(newProduto);
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-          title: Text('Produto adicionado', style: AppTextStyles.subheading),
-          content: Text(
-            'Nome: $nome\nPreço de venda: R\$ ${_precoVendaController.text}',
-            style: AppTextStyles.body,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK', style: TextStyle(color: AppColors.accent)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
+      // Guarda os valores antes de limpar os controllers, já que o
+      // conteúdo do diálogo só é montado no próximo frame — se ele lesse
+      // os controllers diretamente, apareceria tudo em branco.
+      _showSuccessDialog(
+        nome: newProduto.nome,
+        quantidade: newProduto.quantidade,
+        unidade: newProduto.unidade,
+        preco: newProduto.preco,
       );
 
       // Limpar o formulário após adicionar o produto
@@ -250,7 +264,7 @@ class _AddProdutosState extends State<AddProdutos> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
             children: <Widget>[
               Text('Adicionar produto', style: AppTextStyles.heading),
               const SizedBox(height: 4),

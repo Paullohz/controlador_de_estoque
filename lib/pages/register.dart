@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/app_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,9 +57,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Conta criada com sucesso!')),
+      final nome = _nameController.text.trim();
+      await showAppSuccessDialog(
+        context,
+        title: 'Conta criada!',
+        message: '"$nome", sua conta foi registrada com sucesso. Entre para começar a controlar seu estoque.',
+        icon: Icons.verified_rounded,
       );
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -72,11 +78,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else {
         message = 'Erro ao criar conta: ${e.message}';
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      await showAppErrorDialog(context, title: 'Não foi possível criar a conta', message: message);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro desconhecido: $e')),
+      await showAppErrorDialog(
+        context,
+        title: 'Não foi possível criar a conta',
+        message: 'Erro desconhecido: $e',
       );
     } finally {
       if (mounted) {

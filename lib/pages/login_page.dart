@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/app_logo.dart';
 
 class LoginPage extends StatefulWidget {
@@ -57,11 +58,13 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         message = 'Erro ao fazer login: ${e.message}';
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      await showAppErrorDialog(context, title: 'Não foi possível entrar', message: message);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro desconhecido: $e')),
+      await showAppErrorDialog(
+        context,
+        title: 'Não foi possível entrar',
+        message: 'Erro desconhecido: $e',
       );
     } finally {
       if (mounted) {
@@ -127,15 +130,18 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: controller.text.trim());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enviamos um link de recuperação para o seu email.')),
+      await showAppSuccessDialog(
+        context,
+        title: 'Email enviado',
+        message: 'Enviamos um link de recuperação para o seu email.',
+        icon: Icons.mark_email_read_rounded,
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String message = e.code == 'user-not-found'
           ? 'Nenhuma conta encontrada com esse email.'
           : 'Não foi possível enviar o email: ${e.message}';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      await showAppErrorDialog(context, title: 'Não foi possível enviar', message: message);
     }
   }
 

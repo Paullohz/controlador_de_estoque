@@ -1,9 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/profile_avatar.dart';
 
 class EditProfile extends StatefulWidget {
@@ -17,13 +16,12 @@ class _EditProfileState extends State<EditProfile> {
   String _name = '';
   String _email = '';
   String _phone = '';
-  String _imageUrl = '';
-  File? _selectedImage;
   bool _isSaving = false;
 
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _passwordJustChanged = false;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -50,7 +48,8 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Future<void> _loadUserData() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userId = currentUser?.uid;
     if (userId == null) return;
 
     try {
@@ -59,13 +58,16 @@ class _EditProfileState extends State<EditProfile> {
           .doc(userId)
           .get();
 
-      if (!userDoc.exists) return;
+      // Acessar o campo direto no DocumentSnapshot (userDoc['campo']) lança
+      // erro se a chave não existir no documento. Lendo o mapa cru com
+      // data(), um campo ausente simplesmente vira null, sem quebrar os
+      // outros campos que existem.
+      final data = userDoc.data() as Map<String, dynamic>? ?? {};
 
       setState(() {
-        _name = (userDoc['name'] ?? '') as String;
-        _email = (userDoc['email'] ?? '') as String;
-        _phone = (userDoc['phone'] ?? '') as String;
-        _imageUrl = (userDoc['imageUrl'] ?? '') as String;
+        _name = (data['name'] ?? '') as String;
+        _email = (data['email'] ?? currentUser?.email ?? '') as String;
+        _phone = (data['phone'] ?? '') as String;
 
         _nameController.text = _name;
         _emailController.text = _email;
@@ -76,40 +78,138 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
+  /// Troca a senha no Firebase Auth se o usuário preencheu os campos de
+  /// segurança. Retorna `true` se pode seguir com o resto do salvamento
+  /// (nada pedido, ou senha trocada com sucesso) e `false` se algo deu
+  /// errado (o erro já foi mostrado ao usuário).
+  Future<bool> _updatePasswordIfRequested(User user) async {
+    final current = _passwordController.text;
+    final newPass = _newPasswordController.text;
+    final confirm = _confirmPasswordController.text;
+
+    if (current.isEmpty && newPass.isEmpty && confirm.isEmpty) {
+      return true;
+    }
+
+    if (current.isEmpty) {
+      await showAppWarningDialog(
+        context,
+        title: 'Falta a senha atual',
+        message: 'Informe sua senha atual para definir uma nova.',
+      );
+      return false;
+    }
+    if (newPass.isEmpty) {
+      await showAppWarningDialog(
+        context,
+        title: 'Falta a nova senha',
+        message: 'Informe a nova senha para continuar.',
+      );
+      return false;
+    }
+    if (newPass.length < 6) {
+      await showAppWarningDialog(
+        context,
+        title: 'Senha muito curta',
+        message: 'A nova senha deve ter ao menos 6 caracteres.',
+      );
+      return false;
+    }
+    if (newPass != confirm) {
+      await showAppWarningDialog(
+        context,
+        title: 'Senhas diferentes',
+        message: 'A confirmação não coincide com a nova senha.',
+      );
+      return false;
+    }
+    if (newPass == current) {
+      await showAppWarningDialog(
+        context,
+        title: 'Senha já cadastrada',
+        message: 'A nova senha não pode ser igual à senha atual. Escolha uma senha diferente para continuar.',
+      );
+      return false;
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email ?? _emailController.text,
+        password: current,
+      );
+      // O Firebase exige um login "recente" para trocar a senha, então é
+      // preciso reautenticar com a senha atual antes de chamar updatePassword.
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPass);
+
+      _passwordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+      _passwordJustChanged = true;
+      return true;
+    } on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Senha atual incorreta.';
+      } else if (e.code == 'weak-password') {
+        message = 'Nova senha muito fraca. Use ao menos 6 caracteres.';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Por segurança, saia e entre novamente antes de trocar a senha.';
+      } else {
+        message = 'Não foi possível trocar a senha: ${e.message}';
+      }
+      await showAppErrorDialog(context, title: 'Não foi possível trocar a senha', message: message);
+      return false;
     }
   }
 
   Future<void> _saveUserData() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
+    _passwordJustChanged = false;
     setState(() {
       _isSaving = true;
     });
 
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'phone': _phoneController.text,
-        'imageUrl': _imageUrl,
-      });
+      final passwordOk = await _updatePasswordIfRequested(user);
+      if (!passwordOk) {
+        return;
+      }
+
+      // .update() falha com "not-found" se o documento ainda não existir
+      // (caso de contas antigas cujo cadastro nunca criou o doc no
+      // Firestore). .set(..., merge: true) cria o documento se faltar e
+      // só atualiza os campos informados se ele já existir.
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+        {
+          'name': _nameController.text,
+          'email': _emailController.text,
+          'phone': _phoneController.text,
+        },
+        SetOptions(merge: true),
+      );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dados atualizados com sucesso.')),
-      );
+
+      if (_passwordJustChanged) {
+        await showAppSuccessDialog(
+          context,
+          title: 'Senha alterada',
+          message: 'Sua senha foi atualizada. Use a nova senha da próxima vez que entrar.',
+          icon: Icons.lock_reset_rounded,
+        );
+      } else {
+        await showAppSuccessDialog(
+          context,
+          title: 'Perfil atualizado',
+          message: 'Suas informações foram salvas com sucesso.',
+        );
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível salvar: $e')),
-      );
+      await showAppErrorDialog(context, title: 'Não foi possível salvar', message: '$e');
     } finally {
       if (mounted) {
         setState(() {
@@ -185,21 +285,10 @@ class _EditProfileState extends State<EditProfile> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 8),
-            Center(
-              child: ProfileAvatar(
-                radius: 52,
-                localFile: _selectedImage,
-                imageUrl: _imageUrl,
-                editable: true,
-                onTap: _pickImage,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: Text(
-                _selectedImage == null ? 'Toque para alterar a foto' : 'Foto selecionada',
-                style: AppTextStyles.bodyMuted,
-              ),
+            // Ícone estático — sem seleção de foto, para não depender do
+            // Firebase Storage.
+            const Center(
+              child: ProfileAvatar(radius: 52),
             ),
             const SizedBox(height: 28),
             _sectionLabel('Dados pessoais'),

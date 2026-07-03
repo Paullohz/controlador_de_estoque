@@ -33,16 +33,6 @@ dependencies:
   firebase_core: ^4.11.0
   cloud_firestore: ^6.4.1
   firebase_auth: ^6.5.4
-  firebase_database: ^12.4.1
-  provider:
-  http:
-  image_picker: ^0.8.4+2
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.6
-  curved_navigation_bar: ^1.0.5
-  firebase_storage: ^13.4.1
   flutter_slidable: ^3.1.1
   google_fonts: ^8.0.2
 
@@ -62,17 +52,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  assets:
-    - assets/Doritos.png
-    - assets/Pringles.png
-    - assets/Redbull.png    
-    - assets/Coca-zero.png
-    - assets/Heinz.png
-    - assets/Hellmans.png
-    - assets/Lays.png
-    - assets/Whisky.png
-    - assets/Pepsi.png
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

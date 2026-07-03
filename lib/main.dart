@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Controlador de Estoque', // Atualizei o título para o novo nome do projeto
+      title: 'StockHub',
       theme: AppTheme.dark,
       initialRoute: '/login', // Defina uma rota inicial
       routes: {

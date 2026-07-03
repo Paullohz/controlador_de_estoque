@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_shiftsync/models/produtos.dart';
 import 'package:flutter_shiftsync/repositories/produtos_repository.dart';
 import 'package:flutter_shiftsync/theme/app_theme.dart';
+import 'package:flutter_shiftsync/widgets/app_dialogs.dart';
 import 'package:flutter_shiftsync/widgets/product_avatar.dart';
 
 const _unidadeOptions = <String>[
@@ -241,40 +242,20 @@ class _EditProdutoScreenState extends State<EditProdutoScreen> {
       setState(() {
         _isSaving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível salvar: $e')),
-      );
+      await showAppErrorDialog(context, title: 'Não foi possível salvar', message: '$e');
     }
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-        title: Text('Excluir produto', style: AppTextStyles.subheading),
-        content: Text(
-          'Tem certeza que deseja excluir "${widget.produto.nome}"? Essa ação não pode ser desfeita.',
-          style: AppTextStyles.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancelar', style: AppTextStyles.bodyMuted),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Excluir',
-              style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'Excluir produto',
+      message: 'Tem certeza que deseja excluir "${widget.produto.nome}"? Essa ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      icon: Icons.delete_outline_rounded,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       if (!mounted) return;
       Navigator.pop(context, const ProdutoEditResult.deleted());
     }

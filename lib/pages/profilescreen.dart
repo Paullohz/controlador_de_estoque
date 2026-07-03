@@ -30,7 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
-    String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final currentUser = FirebaseAuth.instance.currentUser;
+    String userId = currentUser?.uid ?? '';
     if (userId.isEmpty) {
       return;
     }
@@ -41,13 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .doc(userId)
           .get();
 
-      if (!userDoc.exists) return;
+      // Acessar o campo direto no DocumentSnapshot (userDoc['campo']) lança
+      // erro se a chave não existir no documento. Lendo o mapa cru com
+      // data(), um campo ausente simplesmente vira null, sem quebrar os
+      // outros campos que existem.
+      final data = userDoc.data() as Map<String, dynamic>? ?? {};
 
       setState(() {
-        _name = (userDoc['name'] ?? '') as String;
-        _email = (userDoc['email'] ?? '') as String;
-        _phone = (userDoc['phone'] ?? '') as String;
-        _imageUrl = (userDoc['imageUrl'] ?? '') as String;
+        _name = (data['name'] ?? '') as String;
+        _email = (data['email'] ?? currentUser?.email ?? '') as String;
+        _phone = (data['phone'] ?? '') as String;
+        _imageUrl = (data['imageUrl'] ?? '') as String;
       });
     } catch (e) {
       // Mantém os campos vazios se não for possível carregar os dados.
@@ -120,8 +125,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/edit_profile');
+                          onPressed: () async {
+                            await Navigator.pushNamed(context, '/edit_profile');
+                            // Ao voltar da edição, recarrega os dados para
+                            // refletir o que foi salvo (ou continuar
+                            // mostrando o que já estava, se nada mudou).
+                            _loadUserData();
                           },
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 50),
