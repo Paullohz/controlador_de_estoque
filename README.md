@@ -2,39 +2,53 @@
 
 Controle de estoque simples e rápido para pequenos negócios (mercadinhos, adegas, lojas de conveniência), feito em Flutter com Firebase.
 
-Cadastre produtos com foto, acompanhe o que está em estoque, edite seu perfil e gerencie tudo direto do celular — Android e iOS.
+Cada conta é uma empresa: cadastre produtos, acompanhe o que está em estoque, controle preços e fornecedores, e gerencie tudo direto do celular — Android e iOS. O estoque de uma conta nunca aparece para outra.
 
-<!--
-  Dica: troque os links abaixo por prints reais do app assim que tiver.
-  Fica muito mais convidativo pra quem chega no repositório.
--->
 <p align="center">
-  <img src="docs/screenshots/login.png" width="200" alt="Tela de login" />
-  <img src="docs/screenshots/produtos.png" width="200" alt="Lista de produtos" />
-  <img src="docs/screenshots/adicionar.png" width="200" alt="Adicionar produto" />
+  <table>
+    <tr>
+      <td align="center">
+        <img src="docs/screenshots/login.png" width="200" alt="Tela de login" /><br />
+        <sub><b>Login</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/produtos.png" width="200" alt="Lista de produtos" /><br />
+        <sub><b>Produtos</b></sub>
+      </td>
+      <td align="center">
+        <img src="docs/screenshots/adicionar.png" width="200" alt="Adicionar produto" /><br />
+        <sub><b>Adicionar produto</b></sub>
+      </td>
+    </tr>
+  </table>
 </p>
 
 ## Funcionalidades
 
-- **Autenticação** — login e cadastro com email/senha (Firebase Auth)
-- **Catálogo de produtos** — adicionar, listar, buscar e excluir produtos
-- **Fotos de produto** — upload de imagem direto da galeria pro Firebase Storage
-- **Perfil de usuário** — visualizar e editar nome, email, telefone e foto
-- **Navegação por abas** — barra de navegação curva entre Produtos, Adicionar e Perfil
+- **Autenticação completa** — cadastro, login, recuperação de senha por email e troca de senha com reautenticação (Firebase Auth)
+- **Estoque isolado por conta** — cada login representa uma empresa; os produtos ficam em `users/{uid}/produtos` no Firestore, então uma conta nunca vê o estoque de outra
+- **Catálogo de produtos** — nome, categoria, SKU, descrição, preço de custo e de venda, quantidade, unidade de medida, estoque mínimo, fornecedor e localização no estoque
+- **Edição e exclusão de produtos** — com confirmação antes de excluir
+- **Favoritos** — produtos marcados como favoritos ficam fixados no topo da lista e da busca
+- **Indicadores de estoque** — sinalização automática de "estoque baixo" e "sem estoque" com base na quantidade e no mínimo configurado
+- **Perfil do usuário** — nome, email e telefone reais, carregados do cadastro; edição com validação
+- **Feedback visual consistente** — diálogos padronizados de sucesso, aviso, erro e confirmação em todo o app
+- **Navegação por abas** — barra inferior própria (sem depender de pacote externo), com ícones e rótulos entre Produtos, Adicionar e Perfil
 
 ## Tecnologias
 
 - [Flutter](https://flutter.dev) / Dart
-- [Firebase](https://firebase.google.com): Auth, Cloud Firestore, Realtime Database, Storage
-- [google_fonts](https://pub.dev/packages/google_fonts), [flutter_slidable](https://pub.dev/packages/flutter_slidable), [curved_navigation_bar](https://pub.dev/packages/curved_navigation_bar), [image_picker](https://pub.dev/packages/image_picker)
+- [Firebase](https://firebase.google.com): Authentication e Cloud Firestore
+- [google_fonts](https://pub.dev/packages/google_fonts) — tipografia
+- [flutter_slidable](https://pub.dev/packages/flutter_slidable) — ações de deslizar nos cards de produto
 
 ## Como rodar o projeto
 
 ### Pré-requisitos
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado e configurado (`flutter doctor` sem erros)
-- Um projeto no [Firebase Console](https://console.firebase.google.com) com Authentication, Firestore, Realtime Database e Storage ativados
-- Para iOS: Xcode + CocoaPods instalados
+- Um projeto no [Firebase Console](https://console.firebase.google.com) com **Authentication** (email/senha) e **Cloud Firestore** ativados
+- Para iOS: Xcode + CocoaPods instalados (deployment target 15.6+)
 
 ### Passo a passo
 
@@ -61,25 +75,61 @@ No iOS, depois do `flutter pub get`, rode também:
 cd ios && pod install && cd ..
 ```
 
+### Regras de segurança do Firestore
+
+Como cada conta representa uma empresa isolada, publique estas regras no Firebase Console (**Firestore Database → Regras**) antes de usar o app com dados reais:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /produtos/{produtoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+```
+
 ## Estrutura do projeto
 
 ```
 lib/
-├── main.dart                    # Ponto de entrada, rotas e tema
-├── firebase_options.dart        # Config do Firebase (gerado pelo FlutterFire CLI)
-├── models/                      # Modelos de dados (Produto)
-├── pages/                       # Telas do app (login, produtos, perfil, etc.)
-├── repositories/                # Acesso ao Firestore
-├── theme/                       # Cores, tipografia e ThemeData centralizados
-└── widgets/                     # Componentes reutilizáveis (cards, marca, etc.)
+├── main.dart                       # Ponto de entrada, rotas e tema
+├── firebase_options.dart           # Config do Firebase (gerado pelo FlutterFire CLI)
+├── models/
+│   └── produtos.dart                # Modelo de dados do produto
+├── repositories/
+│   └── produtos_repository.dart     # Acesso ao Firestore (isolado por usuário)
+├── pages/                           # Telas do app
+│   ├── login_page.dart
+│   ├── register.dart
+│   ├── menu_page.dart                # Shell com as abas
+│   ├── ProductsListScreen.dart
+│   ├── add_produtos.dart
+│   ├── edit_produto.dart
+│   ├── profilescreen.dart
+│   └── EditProfile.dart
+├── theme/
+│   └── app_theme.dart                # Cores, tipografia e ThemeData centralizados
+└── widgets/                          # Componentes reutilizáveis
+    ├── app_bottom_bar.dart            # Barra de navegação inferior própria
+    ├── app_dialogs.dart               # Diálogos/snackbars padronizados
+    ├── app_logo.dart
+    ├── product_avatar.dart            # Ícone gerado a partir do nome do produto
+    ├── profile_avatar.dart
+    └── slidable_custom.dart           # Card de produto com ações de deslizar
 ```
 
 ## Roadmap
 
-- [ ] Edição de produtos existentes (hoje só dá pra trocar a foto)
-- [ ] Controle de quantidade em estoque com alertas de reposição
 - [ ] Login com Google/Apple
-- [ ] Suporte a múltiplos usuários/lojas
+- [ ] Múltiplos usuários por empresa (hoje cada conta é uma empresa isolada)
+- [ ] Relatórios e exportação do estoque
+- [ ] Notificações de estoque baixo
 
 ## Contribuindo
 
